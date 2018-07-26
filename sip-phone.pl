@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+
 #Формирование файлов конфигурации для sip-телефонов Yealink.
 #Файл conf_number_line.conf содержит в себе информацию о том, какие номера прописаны за какими sip-телефонами (mac-адресами) и за каким номером аккаунта на этом sip-телефоне закреплен номер.
 #(В AD есть только номер и mac, но этой информации не достаточно в том случае, если на тел. аппарате прописано несколько аккаунтов (номеров), как на W52P например), в связи с чем, 
@@ -39,8 +40,41 @@ my $history_dir = "$script_dir/history";
 my $tmp_dir = '/tmp';
 my $namedgroup = 'namedgroup.conf';
 my $vpn_admin = 0;
-my $vpn_root = 0;
-my $tftp_ip = 'tftp://10.0.18.2/';
+my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
+my $port = '';		#"3306"; # порт, на который открываем соединение
+my $user = '';		#"freepbxuser"; # имя пользователя
+my $pass = '';		#пароль /etc/freepbx.conf
+my $db = '';		#"asterisk"; # имя базы данных.
+my $vpn_root = '';	#0|1 (0 - no vpn, 1 - yes vpn)
+my $tftp_ip = '';	#'tftp://X.X.X.X/';
+open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "Error opening file: freepbx.pass $!";
+	while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
+		chomp ($line_freepbx_pass);
+		if ($line_freepbx_pass =~ /^\#/){
+			next;
+		}
+		my @array_freepbx_pass = split (/ = /,$line_freepbx_pass,-1);
+		given($array_freepbx_pass[0]){
+			when('host'){
+				$host = $array_freepbx_pass[1];
+			}when('port'){
+				$port = $array_freepbx_pass[1];
+			}when('user'){
+				$user = $array_freepbx_pass[1];
+			}when('pass'){
+				$pass = $array_freepbx_pass[1];
+			}when('db'){
+				$db = $array_freepbx_pass[1];
+			}when('vpn_root'){
+				$vpn_root = $array_freepbx_pass[1];
+			}when('tftp_ip'){
+				$tftp_ip = $array_freepbx_pass[1];
+			}default{
+				print "Лишняя строка в freepbx.pass\n";
+			}
+		}
+	}
+close($freepbx_pass);
 my %hash_named = ();								#номера групп из файла conf_number_line.conf, имеют приоритет!
 my %hash_named_db = ();								#номера групп из BD FreePBX
 my %hash_namedgroup = ();							#номера групп из файла namedgroup.conf, содержит шаблоны по автозаполнению групп!
@@ -109,37 +143,6 @@ if ($yes_ad_sip_phone eq ''){
 	open (my $file, '>:encoding(UTF-8)', "$dir_conf/ad_sip-phone.txt") || die "Error opening file: ad_sip-phone.txt $!";
 	close ($file);
 }
-
-my $host = '';#"localhost"; # MySQL-сервер нашего хостинга
-my $port = '';#"3306"; # порт, на который открываем соединение
-my $user = '';#"freepbxuser"; # имя пользователя
-my $pass = '';# пароль /etc/freepbx.conf
-my $db = '';#"asterisk"; # имя базы данных.
-
-open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "Error opening file: freepbx.pass $!";
-	while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
-		chomp ($line_freepbx_pass);
-		if ($line_freepbx_pass =~ /^\#/){
-			next;
-		}
-		my @array_freepbx_pass = split (/ = /,$line_freepbx_pass,-1);
-		given($array_freepbx_pass[0]){
-			when('host'){
-				$host = $array_freepbx_pass[1];
-			}when('port'){
-				$port = $array_freepbx_pass[1];
-			}when('user'){
-				$user = $array_freepbx_pass[1];
-			}when('pass'){
-				$pass = $array_freepbx_pass[1];
-			}when('db'){
-				$db = $array_freepbx_pass[1];
-			}default{
-				print "Лишняя строка в freepbx.pass\n";
-			}
-		}
-	}
-close($freepbx_pass);
 
 #Считываем номера, у которых в атрибуте с моделью sip-телефона пусто.
 my $dbasterisk = DBI->connect("DBI:mysql:$db:$host:$port",$user,$pass,{ mysql_enable_utf8 => 1 });
