@@ -13,15 +13,12 @@ use File::Copy;
 
 my $dir = '/etc/asterisk/script';
 my $dir_tiff = '/mnt/fax_out';
-my $domen = 'fmp.ru';
 my $ext = '';
 my $num = 0;
 my $number_fax_start = 5000;
 my %hash_number_fax = ();
 my $file_name = $ARGV[0];			#Путь до файла /var/spool/cups-pdf/, менять можно в: /etc/cups/cups_pdf.conf
 my $user_name = $ARGV[1];
-my $user_email = 'kas@fmp.ru';
-#my $user_email = 'kruk.ivan@itmh.ru';
 my $i = 0;
 my $date_time_file = strftime "%Y-%m-%d_%H%M%S", localtime(time);
 my $comment = '';
@@ -31,11 +28,13 @@ $ENV{PATH} = '/bin:/usr/bin:/sbin:/usr/sbin';
 # Делаем корень текущим каталогом
 #chdir '/';
 
-my $host = '';#"localhost"; # MySQL-сервер нашего хостинга
-my $port = '';#"3306"; # порт, на который открываем соединение
-my $user = '';#"freepbxuser"; # имя пользователя
-my $pass = '';# пароль /etc/freepbx.conf
-my $db = '';#"asterisk"; # имя базы данных.
+my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
+my $port = '';		#"3306"; # порт, на который открываем соединение
+my $user = '';		#"freepbxuser"; # имя пользователя
+my $pass = '';		#пароль /etc/freepbx.conf
+my $db = '';		#"asterisk"; # имя базы данных.
+my $user_email = '';	#e-mail для факсов.
+my $domen = '';		#Домен.
 open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error opening file: freepbx.pass $!";
 	while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
 		chomp ($line_freepbx_pass);
@@ -54,8 +53,12 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 				$pass = $array_freepbx_pass[1];
 			}when('db'){
 				$db = $array_freepbx_pass[1];
+			}when('domen'){
+				$domen = $array_freepbx_pass[1];
+			}when('user_email'){
+				$user_email = $array_freepbx_pass[1];
 			}default{
-				print "Лишняя строка в freepbx.pass\n";
+				next;
 			}
 		}
 	}
@@ -72,7 +75,7 @@ while (my $ref = $sth->fetchrow_arrayref) {
 	}else{
 		$comment = "Этот документ, для отправки факсимильного сообщения, был отправлен с учетной записи: \\
 				$user_name, но у этой учетной записи в AD не корректно задан email.";
-		#Если поле email пустое или не содержит @fmp.ru, то почту оставляем kas@fmp.ru
+		#Если поле email пустое или не содержит @fmp.ru, то почту отправляем на $user_email
 	}
 #	print "$user_email\n"; # печатаем результат
 }

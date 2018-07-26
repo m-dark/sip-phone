@@ -26,8 +26,8 @@ use encoding 'utf-8';
 #use Date::Dumper qw(Dumper);
 #fwconsole userman --syncall --force
 
-#my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
-my $dir = '/autoconfig_old';
+my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
+#my $dir = '/autoconfig_old';
 my $dir_conf = '/etc/asterisk/script';						#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
 my %hash_mac_model = ();							#Хэш mac-адресов с версией модели Yealinka. (Для проверки корректно внесенной информации о модели sip-телефона на разных учетках AD).
 my %hash_sip_phone = ();							#Хэш содержит mac-адреса sip-телефонов с номерами телефонов и паролями от sip-учеток этих номеров.
@@ -70,7 +70,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 			}when('tftp_ip'){
 				$tftp_ip = $array_freepbx_pass[1];
 			}default{
-				print "Лишняя строка в freepbx.pass\n";
+				next;
 			}
 		}
 	}
