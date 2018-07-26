@@ -70,7 +70,7 @@ my $dbasterisk = DBI->connect("DBI:mysql:$db:$host:$port",$user,$pass);
 my $sth = $dbasterisk->prepare("SELECT email FROM userman_users WHERE username=\'$user_name\';");
 $sth->execute; # исполняем запрос
 while (my $ref = $sth->fetchrow_arrayref) {
-	if (($$ref[0] ne '') && ($$ref[0] =~ /\@fmp.ru$/)){
+	if (($$ref[0] ne '') && ($$ref[0] =~ /\@$domen$/)){
 		$user_email = $$ref[0];
 	}else{
 		$comment = "Этот документ, для отправки факсимильного сообщения, был отправлен с учетной записи: \\
