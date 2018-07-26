@@ -64,7 +64,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 	}
 close($freepbx_pass);
 
-#SELECT email FROM userman_users WHERE username='kas';
+#SELECT email FROM userman_users WHERE username='XXXX';
 
 my $dbasterisk = DBI->connect("DBI:mysql:$db:$host:$port",$user,$pass);
 my $sth = $dbasterisk->prepare("SELECT email FROM userman_users WHERE username=\'$user_name\';");
