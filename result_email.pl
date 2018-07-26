@@ -11,11 +11,14 @@ use DBI;
 use File::Copy;
 
 my $dir = '/etc/asterisk/script';
-my $host = '';#"localhost"; # MySQL-сервер нашего хостинга
-my $port = '';#"3306"; # порт, на который открываем соединение
-my $user = '';#"freepbxuser"; # имя пользователя
-my $pass = '';# пароль /etc/freepbx.conf
-my $db = '';#"asterisk"; # имя базы данных.
+my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
+my $port = '';		#"3306"; # порт, на который открываем соединение
+my $user = '';		#"freepbxuser"; # имя пользователя
+my $pass = '';		# пароль /etc/freepbx.conf
+my $db = '';		#"asterisk"; # имя базы данных.
+my $user_name = '';	#
+my $user_email = '';	#
+my $domen = '';		#Домен
 open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error opening file: freepbx.pass $!";
 	while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
 		chomp ($line_freepbx_pass);
@@ -34,6 +37,12 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 				$pass = $array_freepbx_pass[1];
 			}when('db'){
 				$db = $array_freepbx_pass[1];
+			}when('domen'){
+				$domen = $array_freepbx_pass[1];
+			}when('user_name'){
+				$user_name = $array_freepbx_pass[1];
+			}when('user_email'){
+				$user_email = $array_freepbx_pass[1];
 			}default{
 				print "Лишняя строка в freepbx.pass\n";
 			}
@@ -41,8 +50,6 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 	}
 close($freepbx_pass);
 my $number = $ARGV[0];
-my $user_name = 'kas';
-my $user_email = 'kas@fmp.ru';
 
 open (my $file, '<:encoding(UTF-8)', "$dir/number-fax.conf") || die "Error opening file: number-fax.conf $!";
 	while (defined(my $lime_number_fax = <$file>)){
@@ -59,10 +66,10 @@ my $dbasterisk = DBI->connect("DBI:mysql:$db:$host:$port",$user,$pass);
 my $sth = $dbasterisk->prepare("SELECT email FROM userman_users WHERE username=\'$user_name\';");
 $sth->execute; # исполняем запрос
 while (my $ref = $sth->fetchrow_arrayref) {
-	if (($$ref[0] ne '') && ($$ref[0] =~ /\@fmp.ru$/)){
+	if (($$ref[0] ne '') && ($$ref[0] =~ /\@$domen$/)){
 		$user_email = $$ref[0];
 	}else{
-		#Если поле email пустое или не содержит @fmp.ru, то почту оставляем kas@fmp.ru
+		#Если поле email пустое или не содержит @$domen, то почту отправляем на $user_email
 	}
 #	print "$user_email\n"; # печатаем результат
 }
