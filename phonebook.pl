@@ -16,13 +16,14 @@ my $dir = '/etc/asterisk/script';
 my $history_dir = "$dir/history";
 my $dir_conf_asterisk = '/etc/asterisk';
 my $file_extensions_additional = 'extensions_additional.conf';
-
-my $host = '';#"localhost"; # MySQL-сервер нашего хостинга
-my $port = '';#"3306"; # порт, на который открываем соединение
-my $user = '';#"freepbxuser"; # имя пользователя
-my $pass = '';# пароль /etc/freepbx.conf
-my $db = '';#"asterisk"; # имя базы данных.
-
+my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
+my $port = '';		#"3306"; # порт, на который открываем соединение
+my $user = '';		#"freepbxuser"; # имя пользователя
+my $pass = '';		# пароль /etc/freepbx.conf
+my $db = '';		#"asterisk"; # имя базы данных.
+my $domen = '';		#Домен
+my $user_name = '';	#
+my $user_email_phonebook = '';	#Куда отправляем телефонный справочник.
 open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error opening file: freepbx.pass $!";
 	while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
 		chomp ($line_freepbx_pass);
@@ -41,18 +42,20 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 				$pass = $array_freepbx_pass[1];
 			}when('db'){
 				$db = $array_freepbx_pass[1];
+			}when('domen'){
+				$domen = $array_freepbx_pass[1];
+			}when('user_name'){
+				$user_name = $array_freepbx_pass[1];
+			}when('user_email_phonebook'){
+				$user_email_phonebook = $array_freepbx_pass[1];
 			}default{
-				print "Лишняя строка в freepbx.pass\n";
+				next;
 			}
 		}
 	}
 close($freepbx_pass);
 
 my $number = $ARGV[0];
-my $user_name = 'kas';
-my $domen = 'fmp.ru';
-my $user_email = 'office@fmp.ru';
-#my $user_email = 'kas@fmp.ru';
 my $text = '<html><table width="1200" border="1"><caption>Изменения в телефонном справочнике сотрудников ВМП</caption><tr><th>ФИО</th><th>Внутренний номер</th><th>Прямой городской номер</th><th>Прямой групповой городской номер</th><th>Городской номер голосового меню</th></tr>';
 
 my $date_directory = strftime "%Y%m", localtime(time);				#Название каталога с историей изменений. (ГГГГММ)
@@ -323,7 +326,7 @@ sub diff_file{
 		close ($file_phonebook_diff);
 		$text = "$text".'</table></html>';
 #		print "$text\n";
-		system("/usr/bin/sendEmail -f phonebook\@$domen -t $user_email -u Изменения в телефонном справочнике сотрудников -o message-charset=utf-8 \\
+		system("/usr/bin/sendEmail -f phonebook\@$domen -t $user_email_phonebook -u Изменения в телефонном справочнике сотрудников -o message-charset=utf-8 \\
 			-m \"$text\" \\
 			-s localhost -a $dir_file/phonebook_fmp.xls");
 	}
