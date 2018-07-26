@@ -56,7 +56,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 close($freepbx_pass);
 
 my $number = $ARGV[0];
-my $text = '<html><table width="1200" border="1"><caption>Изменения в телефонном справочнике сотрудников ВМП</caption><tr><th>ФИО</th><th>Внутренний номер</th><th>Прямой городской номер</th><th>Прямой групповой городской номер</th><th>Городской номер голосового меню</th></tr>';
+my $text = '<html><table width="1200" border="1"><caption>Изменения в телефонном справочнике сотрудников</caption><tr><th>ФИО</th><th>Внутренний номер</th><th>Прямой городской номер</th><th>Прямой групповой городской номер</th><th>Городской номер голосового меню</th></tr>';
 
 my $date_directory = strftime "%Y%m", localtime(time);				#Название каталога с историей изменений. (ГГГГММ)
 my $date_time_file = strftime "%Y-%m-%d_%H%M%S", localtime(time);		#Переменная хранит в себе дату и время запуска скрипта, для понимания, когда вносились изменения.
@@ -126,9 +126,9 @@ close ($file);
 #Печатаем результат
 #ФИО | ВН | ПГН | ГГН | IVR (1) |
 chdir '/etc/asterisk/script';
-my $workbook  = Spreadsheet::WriteExcel->new('phonebook_fmp.xls');
+my $workbook  = Spreadsheet::WriteExcel->new("phonebook_${domen}.xls");
 
-my $worksheet = $workbook->add_worksheet('ВМП');
+my $worksheet = $workbook->add_worksheet("$domen");
 my $bold = $workbook->add_format(bold => 1);
 
 $worksheet->set_column('A:A', 56, $bold);
@@ -300,7 +300,7 @@ sub diff_file{
 		`diff -u $dir_file/${original_file} $tmp_dir_file/${date_time_file}_${original_file} > /$history_dir/$date_directory/${date_time_file}_${original_file}.diff`;
 		`cat $dir_file/${original_file} > /$history_dir/$date_directory/${date_time_file}_${original_file}`;
 		`cat $tmp_dir_file/${date_time_file}_${original_file} > $dir_file/$original_file`;
-		`cp $dir_file/phonebook_fmp.xls /mnt/fax/secretary/phonebook/phonebook_fmp.xls`;
+		`cp $dir_file/phonebook_${domen}.xls /mnt/fax/secretary/phonebook/phonebook_${domen}.xls`;
 		
 		open (my $file_phonebook_diff, '<:encoding(windows-1251)', "/$history_dir/$date_directory/${date_time_file}_${original_file}.diff") || die "Error opening file: ${date_time_file}_${original_file}.diff $!";
 			while (defined(my $line_phonebook_diff = <$file_phonebook_diff>)){
@@ -328,7 +328,7 @@ sub diff_file{
 #		print "$text\n";
 		system("/usr/bin/sendEmail -f phonebook\@$domen -t $user_email_phonebook -u Изменения в телефонном справочнике сотрудников -o message-charset=utf-8 \\
 			-m \"$text\" \\
-			-s localhost -a $dir_file/phonebook_fmp.xls");
+			-s localhost -a $dir_file/phonebook_${domen}.xls");
 	}
 	`rm $tmp_dir_file/${date_time_file}_${original_file}`;
 }
