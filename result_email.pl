@@ -75,5 +75,4 @@ while (my $ref = $sth->fetchrow_arrayref) {
 }
 my $rc = $sth->finish;
 $rc = $dbasterisk->disconnect;  # закрываем соединение
-
 print "$user_email";
