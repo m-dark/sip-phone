@@ -3,7 +3,7 @@ logfile=/etc/asterisk/script/log/call_rec_del.log
 dir=/var/spool/asterisk/monitor						#Каталог с файлами разговоров.
 date=`date +%Y.%m.%d' '%H:%M:%S`
 limit_size=96								#Лимит занятого места в процентах, после которого удаляются файлы.
-size=`df -l | grep $dir |  awk '{print $5}' | awk -F'%' '{print $1}'`
+size=`df | grep $dir |  awk '{print $5}' | awk -F'%' '{print $1}'`
 
 while [ "$size" -ge "$limit_size" ]; do
 	echo $date 'Диск загружен на: '$size'%' >> $logfile
