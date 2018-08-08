@@ -1,4 +1,8 @@
 #!/usr/bin/perl -w
+# Скрипт конвертирует wav файлы в mp3 и правит название файла в базе asteriskcdrdb
+# Проверить колличество wav файлов в базе asteriskcdrdb можно запросом:
+# select recordingfile from cdr Where cdr.recordingfile LIKE "%wav";
+# Скрипт написал Крук Иван Александрович kruk.ivan@itmh.ru
 
 use 5.010;
 use strict;
