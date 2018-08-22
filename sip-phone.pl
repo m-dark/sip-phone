@@ -671,8 +671,8 @@ sub diff_file{
 	
 	my $diff_file = `diff -u $dir_file/$original_file $tmp_dir_file/${date_time_file}_${original_file}`;
 	if ($diff_file ne ''){
-		`diff -u $dir_file/${original_file} $tmp_dir_file/${date_time_file}_${original_file} > /$history_dir/$date_directory/${date_time_file}_${original_file}.diff`;
-		`cat $dir_file/${original_file} > /$history_dir/$date_directory/${date_time_file}_${original_file}`;
+		`diff -u $dir_file/${original_file} $tmp_dir_file/${date_time_file}_${original_file} > $history_dir/$date_directory/${date_time_file}_${original_file}.diff`;
+		`cat $dir_file/${original_file} > $history_dir/$date_directory/${date_time_file}_${original_file}`;
 		`cat $tmp_dir_file/${date_time_file}_${original_file} > $dir_file/$original_file && chown tftpd:tftpd $dir_file/$original_file`;
 	}
 	`rm $tmp_dir_file/${date_time_file}_${original_file}`;
