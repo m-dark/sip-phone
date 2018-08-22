@@ -1,8 +1,11 @@
 #!/bin/sh
 logfile=/etc/asterisk/script/log/call_rec_del.log
-dir=/var/spool/asterisk/monitor						#Каталог с файлами разговоров.
+#dir=/var/spool/asterisk/monitor						#Каталог с файлами разговоров.
+#dir=/dev/mapper/SangomaVG-root
+dir=$1
 date=`date +%Y.%m.%d' '%H:%M:%S`
-limit_size=96								#Лимит занятого места в процентах, после которого удаляются файлы.
+#limit_size=70								#Лимит занятого места в процентах, после которого удаляются файлы.
+limit_size=$2
 size=`df | grep $dir |  awk '{print $5}' | awk -F'%' '{print $1}'`
 
 while [ "$size" -ge "$limit_size" ]; do
