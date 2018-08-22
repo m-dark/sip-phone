@@ -533,6 +533,8 @@ close ($file_1);
 &diff_file("$script_dir", "$tmp_dir", 'ad_sip-phone.txt');
 #Фиксируем изменения. (был добавлен или удален номер телефона)
 &diff_file("$script_dir", "$tmp_dir", 'conf_number_line.conf');
+#отвечает за перезагрузку диалплата Asterisk и его модулей. Эта команда соответствует нажатию кнопки "Apply Changes" через GUI FreePBX.
+`amportal a r`;
 
 #print Dumper \%hash_sip_phone;
 
