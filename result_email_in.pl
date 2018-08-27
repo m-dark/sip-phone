@@ -17,7 +17,7 @@ my $user = '';		#"freepbxuser"; # имя пользователя
 my $pass = '';		# пароль /etc/freepbx.conf
 my $db = '';		#"asterisk"; # имя базы данных.
 my $user_name = '';	#
-my $user_email = '';	#
+my $user_email_phonebook = '';	#
 my $domen = '';		#Домен
 open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error opening file: freepbx.pass $!";
 	while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
@@ -41,8 +41,8 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 				$domen = $array_freepbx_pass[1];
 			}when('user_name'){
 				$user_name = $array_freepbx_pass[1];
-			}when('user_email'){
-				$user_email = $array_freepbx_pass[1];
+			}when('user_email_phonebook'){
+				$user_email_phonebook = $array_freepbx_pass[1];
 			}default{
 #				print "Лишняя строка в freepbx.pass\n";
 				next;
@@ -52,28 +52,18 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 close($freepbx_pass);
 my $number = $ARGV[0];
 
-open (my $file, '<:encoding(UTF-8)', "$dir/number-fax.conf") || die "Error opening file: number-fax.conf $!";
-	while (defined(my $lime_number_fax = <$file>)){
-		chomp ($lime_number_fax);
-		if ($lime_number_fax =~ /$number$/){
-			my @array_number_fax = split (/\t/,$lime_number_fax,-1);
-			$user_name = $array_number_fax[0];
-			last;
-		}
-	}
-close ($file);
-
 my $dbasterisk = DBI->connect("DBI:mysql:$db:$host:$port",$user,$pass);
-my $sth = $dbasterisk->prepare("SELECT email FROM userman_users WHERE username=\'$user_name\';");
+#my $sth = $dbasterisk->prepare("SELECT email FROM userman_users WHERE username=\'$user_name\';");
+my $sth = $dbasterisk->prepare("SELECT email FROM userman_users WHERE default_extension=\'$number\';");
 $sth->execute; # исполняем запрос
 while (my $ref = $sth->fetchrow_arrayref) {
 	if (($$ref[0] ne '') && ($$ref[0] =~ /\@$domen$/)){
-		$user_email = $$ref[0];
+		$user_email_phonebook = $$ref[0];
 	}else{
-		#Если поле email пустое или не содержит @$domen, то почту отправляем на $user_email
+		#Если поле email пустое или не содержит @$domen, то почту отправляем на $user_email_phonebook
 	}
-#	print "$user_email\n"; # печатаем результат
+#	print "$user_email_phonebook\n"; # печатаем результат
 }
 my $rc = $sth->finish;
 $rc = $dbasterisk->disconnect;  # закрываем соединение
-print "$user_email";
+print "$user_email_phonebook";
