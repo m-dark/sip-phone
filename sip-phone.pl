@@ -287,7 +287,7 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 		if (defined ($$ref[2] && $$ref[3])){
 			if (exists($hash_mac_model{"\L$$ref[2]"})){
 				if (($hash_mac_model{"\L$$ref[2]"} ne "$$ref[3]") && ("$$ref[3]" ne '')){
-					print "ERROR_2: За mac-адресом \L$$ref[2] уже прописана модель $hash_mac_model{\L$$ref[2]}, а вы пытаетесь прописать за ним новую модель $$ref[3]\n";
+					print "ERROR_2: За mac-адресом \L$$ref[2] уже прописана модель $hash_mac_model{\"\L$$ref[2]\"}, а вы пытаетесь прописать за ним новую модель $$ref[3]\n";
 					next;
 				}else{
 #					print "Тест на скрытый номер: $$ref[2]\t $$ref[3]\n";
