@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-
+#Для запуска данного скрипта необходимо расшарить права chmod 777 pdf_to_tiff.pl
 use 5.010;
 use strict;
 use warnings;
