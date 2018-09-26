@@ -409,14 +409,16 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 					}
 				close ($file_xxx_ppp);
 			}
-			if ($vpn_root == 1){
+			if (exists($hash_vpn_user_enable{$key_number_line_mac})){
 				print $file_cfg "network.vpn_enable = 1\n";
+				print $file_cfg "openvpn.url = ${tftp_ip}${key_number_line_mac}/client.tar\n";
+			}else{
+				print $file_cfg "network.vpn_enable = 0\n";
 				print $file_cfg "openvpn.url = ${tftp_ip}${key_number_line_mac}/client.tar\n";
 			}
 ##!!			print $file_cfg "programablekey.2.type = 38\nprogramablekey.2.label = Конт.\nprogramablekey.3.type = 43\nprogramablekey.3.line = 1\n";
 		close ($file_cfg);
 		open (my $file_cfg_local, '>:encoding(utf-8)', "$tmp_dir/${date_time_file}_${key_number_line_mac}-local.cfg") || die "Error opening file: ${date_time_file}_${key_number_line_mac}-local.cfg $!";
-			my $static_network_vpn_enable_yes = 0;
 			print $file_cfg_local "#!version:1.0.0.1\n";
 			if (($hash_mac_model{${key_number_line_mac}} eq 'w52') || ($hash_mac_model{${key_number_line_mac}} eq 'w56') || ($hash_mac_model{${key_number_line_mac}} eq 'w60')){
 				foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
@@ -440,17 +442,15 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 							my @mas_line_cfg_local_old = split (/ = /,$line_cfg_local_old,-1);
 							if($mas_line_cfg_local_old[0] eq 'static.network.vpn_enable'){
 								if ($linekey_start == 1){
+									print "!!!!!$file_cfg_local!!!!!!\n";
 									&print_array_linekey($file_cfg_local,\%hash_linekey);
 									$linekey_start = 0;
 								}
-								$static_network_vpn_enable_yes = 1;
-								if (exists($hash_vpn_user_enable{$key_number_line_mac})){
-									print $file_cfg_local "static.network.vpn_enable = 1\n";
-								}else{
-									if ($vpn_root == 1){
-										print $file_cfg_local "static.network.vpn_enable = 0\n";
-									}
-								}
+								next;
+							}elsif($mas_line_cfg_local_old[0] =~ /^account.\d{1,2}.always_fwd.enable$/){
+								print $file_cfg_local "$mas_line_cfg_local_old[0] = 0\n";
+							}elsif($mas_line_cfg_local_old[0] =~ /^account.\d{1,2}.always_fwd.target$/){
+								print $file_cfg_local "$mas_line_cfg_local_old[0] = \%EMPTY\%\n";
 							}elsif($mas_line_cfg_local_old[0] =~ /^handset.\d.name$/){
 								if ($linekey_start == 1){
 									&print_array_linekey($file_cfg_local,\%hash_linekey);
@@ -482,15 +482,6 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 						&print_array_linekey($file_cfg_local,\%hash_linekey);
 						$linekey_start = 0;
 					}
-					if ($static_network_vpn_enable_yes == 0){
-						if (exists($hash_vpn_user_enable{$key_number_line_mac})){
-							print $file_cfg_local "static.network.vpn_enable = 1\n";
-						}else{
-							if ($vpn_root == 1){
-								print $file_cfg_local "static.network.vpn_enable = 0\n";
-							}
-						}
-					}
 				close ($file_cfg_local_old);
 			}else{
 				print $file_cfg_local "#!version:1.0.0.1\n\n";
@@ -503,12 +494,6 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 						}
 					}
 				}
-				if (exists($hash_vpn_user_enable{$key_number_line_mac})){
-					print $file_cfg_local "static.network.vpn_enable = 1\n";
-				}else{
-					print $file_cfg_local "static.network.vpn_enable = 0\n";
-				}
-#				print $file_cfg_local "static.openvpn.url = ${tftp_ip}${key_number_line_mac}/client.tar\n";
 			}
 		close ($file_cfg_local);
 
