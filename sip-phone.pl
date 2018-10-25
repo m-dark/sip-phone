@@ -519,7 +519,10 @@ close ($file_1);
 &diff_file("$script_dir", "$tmp_dir", 'conf_number_line.conf');
 #отвечает за перезагрузку диалплата Asterisk и его модулей. Эта команда соответствует нажатию кнопки "Apply Changes" через GUI FreePBX.
 #`amportal a r`;
+<<<<<<< HEAD
 #`fwconsole reload`;
+=======
+>>>>>>> 64d61da6505aa05e442e72f19bd8f9a9ecb3991a
 `sudo -u root /usr/sbin/fwconsole reload`;
 
 #print Dumper \%hash_sip_phone;
