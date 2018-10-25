@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#Для запуска данного скрипта необходимо расшарить права chmod 777 pdf_to_tiff.pl
+#Для запуска данного скрипта необходимо расшарить права chmod 777 pdf_to_tiff.pl number-fax.log
 use 5.010;
 use strict;
 use warnings;
