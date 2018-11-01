@@ -83,7 +83,7 @@ my $rc = $sth->finish;
 $rc = $dbasterisk->disconnect;  # закрываем соединение
 
 open (my $file_3, '>>:encoding(UTF-8)', "$dir/number-fax.log") || die "Error opening file: number-fax.log $!";
-	print $file_3 "$file_name\t$user_name\t$user_email\t$date_time_file\n";
+	print $file_3 "$date_time_file\t$user_name\t$user_email\t$file_name\n";
 close ($file_3);
 
 
