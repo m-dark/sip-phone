@@ -135,7 +135,7 @@ foreach my $file_old (@dir_files){
 
 opendir (CD, "$history_dir") || mkdir "$history_dir", 0744;
 closedir (CD);
-opendir (HIS, "$history_dir/$date_directory") || mkdir "$history_dir/$date_directory/", 0744;
+opendir (HIS, "$history_dir/$date_directory") || ((mkdir "$history_dir/$date_directory/", 0744) and (`chown asterisk:asterisk $history_dir/$date_directory`));
 closedir (HIS);
 
 my $yes_ad_sip_phone = `ls -la $dir_conf| grep ad_sip-phone.txt\$`;
