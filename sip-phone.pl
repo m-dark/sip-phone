@@ -493,6 +493,8 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 						}
 					}
 				}
+				print $file_cfg_local "lang.gui = Russian\n";
+				print $file_cfg_local "lang.wui = Russian\n";
 			}
 		close ($file_cfg_local);
 
@@ -532,9 +534,9 @@ close ($file_1);
 ##	}
 ##}
 
-#linekey.1.type = 15
-#linekey.1.value = %EMPTY%
 #linekey.1.line = 1
+#linekey.1.value = %EMPTY%
+#linekey.1.type = 15
 #linekey.1.label = %EMPTY%
 #linekey.1.extension = %EMPTY%
 #linekey.1.xml_phonebook = 0
@@ -553,19 +555,19 @@ sub print_array_linekey{
 		my @label_value = ();
 		foreach my $linekey_type (sort keys %{$$hash_linekey{$key_line_linekey}}){
 ##			print "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}\n";
-			if ($linekey_type eq 'type'){
+			if ($linekey_type eq 'extension'){
 				$label_value[0] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
-			}elsif($linekey_type eq 'value'){
+			}elsif($linekey_type eq 'label'){
 				$label_value[1] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
 			}elsif($linekey_type eq 'line'){
 				$label_value[2] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
-			}elsif($linekey_type eq 'label'){
-				$label_value[3] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
-			}elsif($linekey_type eq 'extension'){
-				$label_value[4] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
-			}elsif($linekey_type eq 'xml_phonebook'){
-				$label_value[5] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
 			}elsif($linekey_type eq 'pickup_value'){
+				$label_value[3] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
+			}elsif($linekey_type eq 'type'){
+				$label_value[4] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
+			}elsif($linekey_type eq 'value'){
+				$label_value[5] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
+			}elsif($linekey_type eq 'xml_phonebook'){
 				$label_value[6] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
 			}else{
 				$label_value[$i] = "$key_line_linekey.$linekey_type = $$hash_linekey{$key_line_linekey}{$linekey_type}";
