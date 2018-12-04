@@ -40,6 +40,7 @@ my $history_dir = "$script_dir/history";
 my $tmp_dir = '/tmp';
 my $namedgroup = 'namedgroup.conf';
 my $vpn_admin = 0;
+my $reload_yes = 0;
 my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
 my $port = '';		#"3306"; # порт, на который открываем соединение
 my $user = '';		#"freepbxuser"; # имя пользователя
@@ -522,7 +523,9 @@ close ($file_1);
 #отвечает за перезагрузку диалплата Asterisk и его модулей. Эта команда соответствует нажатию кнопки "Apply Changes" через GUI FreePBX.
 #`amportal a r`;
 #`fwconsole reload`;
-`sudo -u root /usr/sbin/fwconsole reload`;
+if ($reload_yes == 1){
+	`sudo -u root /usr/sbin/fwconsole reload`;
+}
 
 #print Dumper \%hash_sip_phone;
 
@@ -694,6 +697,7 @@ sub diff_file{
 	
 	my $diff_file = `diff -u $dir_file/$original_file $tmp_dir_file/${date_time_file}_${original_file}`;
 	if ($diff_file ne ''){
+		$reload_yes = 1;
 		`diff -u $dir_file/${original_file} $tmp_dir_file/${date_time_file}_${original_file} > $history_dir/$date_directory/${date_time_file}_${original_file}.diff`;
 		`cat $dir_file/${original_file} > $history_dir/$date_directory/${date_time_file}_${original_file}`;
 		`cat $tmp_dir_file/${date_time_file}_${original_file} > $dir_file/$original_file && chown tftpd:tftpd $dir_file/$original_file`;
