@@ -434,11 +434,19 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 			if ($yes_file_cfg_local ne ''){
 				my %hash_linekey = ();
 				my $linekey_start = 0;
+				my $lang_gui = 0;
+				my $lang_wui = 0;
 				open (my $file_cfg_local_old, '<:encoding(UTF-8)', "$dir/${key_number_line_mac}-local.cfg") || die "Error opening file: ${key_number_line_mac}-local.cfg $!";
 					while (defined(my $line_cfg_local_old = <$file_cfg_local_old>)){
 						chomp ($line_cfg_local_old);
 						if ($line_cfg_local_old =~ /^\#\!version:/){
 							next;
+						}elsif($line_cfg_local_old =~ /^lang.gui =/){
+							$lang_gui = 1;
+							print $file_cfg_local "lang.gui = Russian\n";
+						}elsif($line_cfg_local_old =~ /^lang.wui =/){
+							$lang_wui = 1;
+							print $file_cfg_local "lang.wui = Russian\n";
 						}elsif ($line_cfg_local_old =~ / = /){
 							my @mas_line_cfg_local_old = split (/ = /,$line_cfg_local_old,-1);
 							if($mas_line_cfg_local_old[0] eq 'static.network.vpn_enable'){
@@ -482,6 +490,12 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 					if ($linekey_start == 1){
 						&print_array_linekey($file_cfg_local,\%hash_linekey);
 						$linekey_start = 0;
+					}
+					if($lang_gui == 0){
+						print $file_cfg_local "lang.gui = Russian\n";
+					}
+					if($lang_wui == 0){
+						print $file_cfg_local "lang.wui = Russian\n";
 					}
 				close ($file_cfg_local_old);
 			}else{
