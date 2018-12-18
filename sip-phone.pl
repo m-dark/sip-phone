@@ -536,7 +536,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 						}
 					}
 				}
-				print $file_cfg_local "lang.gui = Russian\n";
+				print $file_cfg_local "\nlang.gui = Russian\n";
 				print $file_cfg_local "lang.wui = Russian\n";
 			}
 		close ($file_cfg_local);
