@@ -287,6 +287,9 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 		}
 #		print "$$ref[0]\t$$ref[1]\t$$ref[2]\t$$ref[3]\t$$ref[4]\n";
 		if (defined ($$ref[2] && $$ref[3])){
+			if($$ref[2] =~ /[а-яА-Я]/){
+				print "Error_7, В mac-адресе $$ref[2] присутствует русская буква!\n";
+			}
 			if (exists($hash_mac_model{"\L$$ref[2]"})){
 				if (($hash_mac_model{"\L$$ref[2]"} ne "$$ref[3]") && ("$$ref[3]" ne '')){
 					print "ERROR_2: За mac-адресом \L$$ref[2] уже прописана модель $hash_mac_model{\"\L$$ref[2]\"}, а вы пытаетесь прописать за ним новую модель $$ref[3]\n";
@@ -442,11 +445,11 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				while($lsof_i > 0){
 					my $lsof = `lsof | grep ${key_number_line_mac}-local.cfg.swp`;
 					chomp($lsof);
-					if($lsof_i <= 5){
+					if($lsof_i <= 2){
 						if($lsof ne ''){
 							print"$lsof ${key_number_line_mac}-local.cfg!!!!!!\n";
 							$lsof_i++;
-							sleep 5;
+							sleep 20;
 						}else{
 							$lsof_i = 0;
 							last;

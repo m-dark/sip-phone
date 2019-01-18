@@ -155,7 +155,7 @@ for key_all in sorted(dict_all.keys()):
 				print(str(datetime.fromtimestamp(time_old))+"\t"+str(calls_in)+"\t"+str(calls_out)+"\t"+str(calls_all))
 				print_call = 0
 #			print(str(datetime.fromtimestamp(key_all))+"\t"+str(dict_all[key_all]['in'])+"\t"+str(dict_all[key_all]['out'])+"\t"+str(dict_all[key_all]['all'])+"\t-\t",end = '')
-			if dict_all[key_all]['all'] >= 11:
+			if dict_all[key_all]['all'] >= 5:
 				print(str(datetime.fromtimestamp(key_all))+" - ",end = '')
 				print_call = 1
 #		else:
