@@ -435,38 +435,32 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				}
 			}
 			my $yes_file_cfg_local = `ls -la $dir| grep ${key_number_line_mac}-local.cfg\$`;
+			if ($yes_file_cfg_local eq ''){
+				open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
+					print $file_dir_log "${date_time_file}\t${key_number_line_mac}-local.cfg\t Файла нет\n";
+				close($file_dir_log);
+				sleep 30;
+				$yes_file_cfg_local = `ls -la $dir| grep ${key_number_line_mac}-local.cfg\$`;
+			}
+			my $mtime = (stat("$dir/${key_number_line_mac}-local.cfg"))[9];
+			my $time_now = time;
+			my $difference_in_time = ($time_now - $mtime);
+			while ($difference_in_time <= 10){
+				my $date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
+				open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
+					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
+#					print "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
+				close($file_dir_log);
+				sleep 11;
+				$mtime = (stat("$dir/${key_number_line_mac}-local.cfg"))[9];
+				$time_now = time;
+				$difference_in_time = ($time_now - $mtime);
+			}
 			if ($yes_file_cfg_local ne ''){
 				my %hash_linekey = ();
 				my $linekey_start = 0;
 				my $lang_gui = 0;
 				my $lang_wui = 0;
-				my $lsof_i = 1;
-				my $lsof_next = 0;
-				while($lsof_i > 0){
-					my $lsof = `lsof | grep ${key_number_line_mac}-local.cfg.swp`;
-					chomp($lsof);
-					if($lsof_i <= 2){
-						if($lsof ne ''){
-							print"$lsof ${key_number_line_mac}-local.cfg!!!!!!\n";
-							$lsof_i++;
-							sleep 20;
-						}else{
-							$lsof_i = 0;
-							last;
-						}
-					}else{
-						open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/lsof.log") || die "Error opening file: $dir_log/lsof.log $!";
-							print $file_dir_log "${date_time_file}\t${key_number_line_mac}-local.cfg\t$lsof\n";
-						close($file_dir_log);
-						$lsof_next = 1;
-						`rm $tmp_dir/${date_time_file}_${key_number_line_mac}-local.cfg`;
-						`rm $tmp_dir/${date_time_file}_${key_number_line_mac}.cfg`;
-						last;
-					}
-				}
-				if($lsof_next == 1){
-					next;
-				}
 				open (my $file_cfg_local_old, '<:encoding(UTF-8)', "$dir/${key_number_line_mac}-local.cfg") || die "Error opening file: ${key_number_line_mac}-local.cfg $!";
 					while (defined(my $line_cfg_local_old = <$file_cfg_local_old>)){
 						chomp ($line_cfg_local_old);
