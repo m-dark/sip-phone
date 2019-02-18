@@ -555,6 +555,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 		if ($yes_file_cfg_local eq ''){
 			open (my $file_cfg_local, '>:encoding(UTF-8)', "$dir/${key_number_line_mac}-local.cfg") || die "Error opening file: ${key_number_line_mac}-local.cfg $!";
 			close ($file_cfg_local);
+			`chown tftpd:tftpd $dir/${key_number_line_mac}-local.cfg`;
 			print "Был создан файл: $dir/${key_number_line_mac}-local.cfg\n";
 		}
 		&diff_file("$dir", "$tmp_dir", "${key_number_line_mac}-local.cfg");
