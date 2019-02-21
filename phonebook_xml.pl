@@ -23,7 +23,8 @@ my $port = '';		#"3306"; # порт, на который открываем со
 my $user = '';		#"freepbxuser"; # имя пользователя
 my $pass = '';		#пароль /etc/freepbx.conf
 my $db = '';		#"asterisk"; # имя базы данных.
-my @invisible = (121,152,521,523,524);
+#my @invisible = (121,152,521,523,524);
+my @invisible = '';
 my $invisible_yes = 0;
 open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error opening file: freepbx.pass $!";
         while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
@@ -43,6 +44,8 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
                                 $pass = $array_freepbx_pass[1];
                         }when('db'){
                                 $db = $array_freepbx_pass[1];
+                        }when('invisible'){
+				@invisible = split (/,/,$array_freepbx_pass[1]);
                         }default{
                                 next;
                         }
