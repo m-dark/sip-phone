@@ -435,9 +435,10 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				}
 			}
 			my $yes_file_cfg_local = `ls -la $dir| grep ${key_number_line_mac}-local.cfg\$`;
+			my $date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
 			if ($yes_file_cfg_local eq ''){
 				open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
-					print $file_dir_log "${date_time_file}\t${key_number_line_mac}-local.cfg\t Файла нет\n";
+					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t Файла нет\n";
 				close($file_dir_log);
 				sleep 30;
 				$yes_file_cfg_local = `ls -la $dir| grep ${key_number_line_mac}-local.cfg\$`;
@@ -446,7 +447,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 			my $time_now = time;
 			my $difference_in_time = ($time_now - $mtime);
 			while ($difference_in_time <= 10){
-				my $date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
+				$date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
 				open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
 					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
 #					print "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
