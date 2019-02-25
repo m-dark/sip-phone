@@ -9,6 +9,14 @@ import MySQLdb
 import subprocess
 from datetime import datetime
 date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
+dir_conf = '/etc/asterisk/script/';
+freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
+for line in (line.rstrip() for line in freepbx_pass.readlines()):
+	result_line=re.match(r'(fixedcid = \d+)', line)
+	if result_line is not None:
+		param_fixedcid=line.split(' = ')
+		fixedcid_def=param_fixedcid[1]
+freepbx_pass.close()
 list_ring_strategy = ['ringallv2','ringallv2-prim','ringall','ringall-prim','hunt','hunt-prim','memoryhunt-prim','firstavailable','firstnotonphone']
 db = MySQLdb.connect(host="localhost", user="root", passwd="", db="asterisk", charset='utf8')
 cursor = db.cursor()
@@ -23,6 +31,11 @@ for row in cursor:
 #		print result.group(0)
 		text=result.group(0)
 		list_param=text.split(',')
+		if (len(list_param) == 5):
+			fixedcid = list_param[4]
+			print("fixedcid")
+		else:
+			fixedcid = fixedcid_def
 		list_number=list_param[0].split('-')
 		cursor_sel=db.cursor()
 		sel_sql="""SELECT * FROM findmefollow WHERE `grpnum`='%(num)s'"""%{"num":row[0]}
@@ -47,15 +60,17 @@ for row in cursor:
 				if text != ad:
 					upd_sql="""UPDATE findmefollow SET `strategy`='%(strat)s', `grptime`='%(grptime)s', `grplist`='%(grp)s', `pre_ring`='%(pre_ring)s' WHERE grpnum='%(num)s'"""%{"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grp":grplist,"num":row[0],"pre_ring":list_param[2]}
 					upd_indb='rasterisk -x "database put AMPUSER '+row[0]+'/followme/'
-					upd_zn=['grpconf','grplist','postdest','ddial','grptime','ringing','prering','strategy']
-					subprocess.call(upd_indb+upd_zn[0]+' DISABLE"', shell=True)
-					subprocess.call(upd_indb+upd_zn[1]+' '+grplist+'"', shell=True)
-					subprocess.call(upd_indb+upd_zn[2]+' ext-local,'+row[0]+',dest"', shell=True)
-					subprocess.call(upd_indb+upd_zn[3]+' DIRECT"', shell=True)
-					subprocess.call(upd_indb+upd_zn[4]+' '+list_param[3]+'"', shell=True)
-					subprocess.call(upd_indb+upd_zn[5]+' Ring"', shell=True)
-					subprocess.call(upd_indb+upd_zn[6]+' '+list_param[2]+'"', shell=True)
-					subprocess.call(upd_indb+upd_zn[7]+' '+list_ring_strategy[int(list_param[1])-1]+'"', shell=True)
+					upd_zn=['changecid','fixedcid','grpconf','grplist','postdest','ddial','grptime','ringing','prering','strategy']
+					subprocess.call(upd_indb+upd_zn[0]+' extern"', shell=True)
+					subprocess.call(upd_indb+upd_zn[1]+' '+fixedcid+'"', shell=True)
+					subprocess.call(upd_indb+upd_zn[2]+' DISABLE"', shell=True)
+					subprocess.call(upd_indb+upd_zn[3]+' '+grplist+'"', shell=True)
+					subprocess.call(upd_indb+upd_zn[4]+' ext-local,'+row[0]+',dest"', shell=True)
+					subprocess.call(upd_indb+upd_zn[5]+' DIRECT"', shell=True)
+					subprocess.call(upd_indb+upd_zn[6]+' '+list_param[3]+'"', shell=True)
+					subprocess.call(upd_indb+upd_zn[7]+' Ring"', shell=True)
+					subprocess.call(upd_indb+upd_zn[8]+' '+list_param[2]+'"', shell=True)
+					subprocess.call(upd_indb+upd_zn[9]+' '+list_ring_strategy[int(list_param[1])-1]+'"', shell=True)
 					cursor.execute(upd_sql)
 					db.commit()
 					restart=1
@@ -75,15 +90,17 @@ for row in cursor:
 			postdest="ext-local,"+row[0]+",dest"
 			ins_sql="""INSERT INTO findmefollow (grpnum,strategy,grptime,grppre,grplist,postdest,dring,rvolume,pre_ring,ringing,calendar_enable,calendar_match) VALUES ('%(grpnum)s','%(strat)s','%(grptime)s','','%(grpl)s','%(postd)s','','','%(pre_ring)s','Ring','0','yes')"""%{"grpnum":row[0],"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grpl":grplist,"postd":postdest,"pre_ring":list_param[2]}
 			ins_str='rasterisk -x "database put AMPUSER '+row[0]+'/followme/'
-			ins_zn=['grpconf','grplist','postdest','ddial','grptime','ringing','prering','strategy']
-			subprocess.call(ins_str+ins_zn[0]+' DISABLE"', shell=True)
-			subprocess.call(ins_str+ins_zn[1]+' '+grplist+'"', shell=True)
-			subprocess.call(ins_str+ins_zn[2]+' ext-local,'+row[0]+',dest"', shell=True)
-			subprocess.call(ins_str+ins_zn[3]+' DIRECT"', shell=True)
-			subprocess.call(ins_str+ins_zn[4]+' '+list_param[3]+'', shell=True)
-			subprocess.call(ins_str+ins_zn[5]+' Ring"', shell=True)
-			subprocess.call(ins_str+ins_zn[6]+' '+st_param[2]+'"', shell=True)
-			subprocess.call(ins_str+ins_zn[7]+' '+st_ring_strategy[int(list_param[1])-1]+'"', shell=True)
+			ins_zn=['changecid','fixedcid','grpconf','grplist','postdest','ddial','grptime','ringing','prering','strategy']
+			subprocess.call(ins_str+ins_zn[0]+' extern"', shell=True)
+			subprocess.call(ins_str+ins_zn[1]+' '+fixedcid+'"', shell=True)
+			subprocess.call(ins_str+ins_zn[2]+' DISABLE"', shell=True)
+			subprocess.call(ins_str+ins_zn[3]+' '+grplist+'"', shell=True)
+			subprocess.call(ins_str+ins_zn[4]+' ext-local,'+row[0]+',dest"', shell=True)
+			subprocess.call(ins_str+ins_zn[5]+' DIRECT"', shell=True)
+			subprocess.call(ins_str+ins_zn[6]+' '+list_param[3]+'', shell=True)
+			subprocess.call(ins_str+ins_zn[7]+' Ring"', shell=True)
+			subprocess.call(ins_str+ins_zn[8]+' '+st_param[2]+'"', shell=True)
+			subprocess.call(ins_str+ins_zn[9]+' '+st_ring_strategy[int(list_param[1])-1]+'"', shell=True)
 			cursor.execute(ins_sql)
 			db.commit()
 			restart=1
@@ -100,10 +117,14 @@ for row in cursor:
 	del_sql="""DELETE FROM findmefollow WHERE `grpnum`='%(num)s'"""%{"num":row[0]}
 	cursor.execute(del_sql)
 	db.commit()
-	upd_indb='rasterisk -x "database put AMPUSER '+row[0]+'/followme/grplist '+row[0]+'"'
-	upd_indb1='rasterisk -x "database put AMPUSER '+row[0]+'/followme/ddial EXTENSION"'
+	upd_indb='rasterisk -x "database put AMPUSER '+row[0]+'/followme/changecid default"'
+	upd_indb1='rasterisk -x "database put AMPUSER '+row[0]+'/followme/fixedcid "'
+	upd_indb2='rasterisk -x "database put AMPUSER '+row[0]+'/followme/grplist '+row[0]+'"'
+	upd_indb3='rasterisk -x "database put AMPUSER '+row[0]+'/followme/ddial EXTENSION"'
 	subprocess.call(upd_indb, shell=True)
 	subprocess.call(upd_indb1, shell=True)
+	subprocess.call(upd_indb2, shell=True)
+	subprocess.call(upd_indb3, shell=True)
 
 #Update names
 #
