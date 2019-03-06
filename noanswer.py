@@ -97,10 +97,10 @@ for row in cursor:
 			subprocess.call(ins_str+ins_zn[3]+' '+grplist+'"', shell=True)
 			subprocess.call(ins_str+ins_zn[4]+' ext-local,'+row[0]+',dest"', shell=True)
 			subprocess.call(ins_str+ins_zn[5]+' DIRECT"', shell=True)
-			subprocess.call(ins_str+ins_zn[6]+' '+list_param[3]+'', shell=True)
+			subprocess.call(ins_str+ins_zn[6]+' '+list_param[3]+'"', shell=True)
 			subprocess.call(ins_str+ins_zn[7]+' Ring"', shell=True)
-			subprocess.call(ins_str+ins_zn[8]+' '+st_param[2]+'"', shell=True)
-			subprocess.call(ins_str+ins_zn[9]+' '+st_ring_strategy[int(list_param[1])-1]+'"', shell=True)
+			subprocess.call(ins_str+ins_zn[8]+' '+list_param[2]+'"', shell=True)
+			subprocess.call(ins_str+ins_zn[9]+' '+list_ring_strategy[int(list_param[1])-1]+'"', shell=True)
 			cursor.execute(ins_sql)
 			db.commit()
 			restart=1
@@ -165,16 +165,15 @@ for row in cursor:
 		subprocess.call('rasterisk -x "database put AMPUSER '+row[0]+'/recording/out/external force"',shell=True)
 		subprocess.call('rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/internal force"',shell=True)
 
-
 #Reload check
 sql="SELECT `value` FROM admin WHERE `variable`='need_reload'"
 cursor.execute(sql)
 results=cursor.fetchone()
 if results[0]=="true":
+	print(6666666)
         restart=1
-
-
 db.close()
+
 if restart==1:
 	subprocess.call("alias runuser=/usr/sbin/runuser", shell=True)
 	subprocess.call("/var/lib/asterisk/bin/retrieve_conf", shell=True)
