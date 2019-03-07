@@ -176,6 +176,6 @@ db.close()
 
 if restart==1:
 	subprocess.call("alias runuser=/usr/sbin/runuser", shell=True)
-	subprocess.call("/var/lib/asterisk/bin/retrieve_conf", shell=True)
+##	subprocess.call("/var/lib/asterisk/bin/retrieve_conf", shell=True)
 #	subprocess.call("fwconsole reload", shell=True)
 	subprocess.call("/var/lib/asterisk/bin/module_admin reload", shell=True)
