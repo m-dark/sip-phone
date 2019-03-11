@@ -8,12 +8,55 @@ from datetime import datetime
 #date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
 array = []
 extension = set(['all'])
-direction = set(['all','city','810','710','610','89','79','69','8_rf','7_rf','6_rf'])
+direction = set(['all','city','810','710','610','89','79','69','8_rf','7_rf','6_rf','77','10'])
 trunk = set(['all'])
 extension_ok = 0
 direction_ok = 0
 trunk_ok = 0
 
+def direction_function(direction_fun, date_time, extension_number, trunk, number_to, call_duration):
+	if direction_fun=='all':
+		print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='city':
+		if re.match(r"^\d{6,7}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='810':
+		if re.match(r"^810\d{4,16}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='710':
+		if re.match(r"^710\d{4,16}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='610':
+		if re.match(r"^610\d{4,16}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='89':
+		if re.match(r"^89\d{9}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='79':
+		if re.match(r"^79\d{9}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='69':
+		if re.match(r"^69\d{9}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='8_rf':
+		if re.match(r"^8[348]\d{9}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='7_rf':
+		if re.match(r"^7[348]\d{9}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='6_rf':
+		if re.match(r"^6[348]\d{9}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='77':
+		if re.match(r"^77\d{9}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
+	elif direction_fun=='10':
+		if re.match(r"^\d{10}$", number_to) is not None:
+			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration)+' Error_03: Надо разобраться куда это звонят!')
+			
+	else:
+		print('Error_02: Номер '+number_to+'не подходит ни в одно из направлений!')
+#python3.6 billing.py 2019.03.05 00:00:00 2019.03.06 23:59:59 all all Planeta
 for param in sys.argv:
 	array.append(param)
 #result=re.match(r'((\d+(-\d+)*),\d\,\d+\,\d+)', row[1])
@@ -81,21 +124,72 @@ if trunk_ok == 0:
 #print(trunk)
 #print(extension)
 
+array_trunk = []
+array_direction = []
+dir_trunk = '/etc/asterisk/script/billing'
+if array[7]=='all':
+	for tr in trunk:
+		if tr != 'all':
+			array_trunk.append(tr)
+#	print(array_trunk)
+else:
+	array_trunk.append(array[7])
+#	print(array_trunk)
+
+if array[6]=='all':
+	for dr in direction:
+		if dr != 'all':
+			array_direction.append(dr)
+#	print(array_direction)
+else:
+	array_direction.append(array[6])
+#	print(array_direction)
+for dir_tr in array_trunk:
+	for file_tarif in array_direction:
+		file_open = open (str(dir_trunk)+'/'+str(dir_tr)+'/'+file_tarif+'.csv','r')
+		for line in (line.rstrip() for line in file_open.readlines()):
+			result_line=re.match(r"^\d+", line)
+			if result_line is not None:
+				print(line)
+		file_open.close()
+sys.exit()
+
 asteriskcdrdb = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 cursor = asteriskcdrdb.cursor()
-
+if array[5]=='all':
+	cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 4) AND (LENGTH(dst) > 4) AND (dst != 'hangup') AND (billsec != '0') AND (lastdata != '')", (array[1], array[2], array[3], array[4]))
+else:
+	cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 4) AND (LENGTH(dst) > 4) AND (dst != 'hangup') AND (billsec != '0') AND (lastdata != '') AND (cnum = %s)", (array[1], array[2], array[3], array[4], array[5]))
 ##python3.6 billing.py 2019.01.01 00:00:00 2019.03.07 23:00:00 all(trunk) all(direction) all(number)
-cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 4) AND (LENGTH(dst) > 3) AND (dst != 'hangup') AND (billsec != '0')", (array[1], array[2], array[3], array[4]))
+##cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 4) AND (LENGTH(dst) > 3) AND (dst != 'hangup') AND (billsec != '0')", (array[1], array[2], array[3], array[4]))
 #               "SELECT calldate, cnum, lastdata, billsec from cdr WHERE (calldate between '2019-03-01 00:00:00' and '2019-03-06 09:59:59') and (LENGTH(cnum) < 4) and (LENGTH(dst) > 3) and (dst != 'hangup') and (billsec != '0');
 for row in cursor:
-	if array[5] == 'all':
-		print(row)
+	if re.match(r'PJSIP/', row[2]) is not None:
+		trunk_name=row[2].split('/')
+		trunk_name_1=trunk_name[1].split('@')
+		trunk_name_2=trunk_name_1[1].split(',')
+		trunk_finite=trunk_name_2[0]
+		number_to=trunk_name_1[0]
+	elif re.match(r'SIP', row[2]) is not None:
+		trunk_name=row[2].split('/')
+		trunk_finite=trunk_name[1]
+		number_to=trunk_name[2].split(',')[0]
+	else:
+		print('Error_01: '+str(row)+' Не понятно что за транк!')
+		continue
+	if array[7]!='all' and array[7]==trunk_finite:
+		direction_function(array[6],row[0],row[1],trunk_finite,number_to,row[3])
+#		print(str(row[0])+' '+str(row[1])+' '+trunk_finite+' '+number_to+' '+str(row[3]))
+	elif array[7]=='all':
+		direction_function(array[6],row[0],row[1],trunk_finite,number_to,row[3])
+#		print(str(row[0])+' '+str(row[1])+' '+trunk_finite+' '+number_to+' '+str(row[3]))
+#	if row[2] == 'all':
+#		print(row)
 #	else:
-#		print('sdsds')
+#		print(str(row[0])+' '+str(row[1])+' '+str(row[2])+' '+str(row[3]))
 
 cursor.close()
 asteriskcdrdb.close()
-
 
 '''
 one = 0
