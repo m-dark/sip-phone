@@ -165,6 +165,22 @@ for row in cursor:
 		subprocess.call('rasterisk -x "database put AMPUSER '+row[0]+'/recording/out/external force"',shell=True)
 		subprocess.call('rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/internal force"',shell=True)
 
+#Check hung pjsip channels
+check_calls=subprocess.check_output('rasterisk -x "pjsip show channels"',shell=True,universal_newlines=True)
+line_calls=check_calls.split('\n')
+for line_pjsip_calls in line_calls:
+	result_calls=re.match(r'  Channel: PJSIP/', line_pjsip_calls)
+	if result_calls is not None:
+		new_line_pjsip_calls = ' '.join(line_pjsip_calls.split())
+		line_calls_time=new_line_pjsip_calls.split(' ')
+		hour=line_calls_time[3].split(':')
+		if int(hour[0]) >= 2:
+			channel=line_calls_time[1].split('/')
+			channel_request_hangup_log=open('/etc/asterisk/script/log/channel_request_hangup.log', 'a')
+			channel_request_hangup_log.write(str(date_time+"\t"+line_calls_time[1]+"\t"+line_calls_time[3]+"\n"))
+			channel_request_hangup_log.close()
+			subprocess.call('rasterisk -x "channel request hangup '+channel[0]+'/'+channel[1]+'"',shell=True)
+
 #Reload check
 sql="SELECT `value` FROM admin WHERE `variable`='need_reload'"
 cursor.execute(sql)
