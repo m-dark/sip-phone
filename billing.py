@@ -149,8 +149,8 @@ for dir_tr in array_trunk:
 		file_open = open (str(dir_trunk)+'/'+str(dir_tr)+'/'+file_tarif+'.csv','r')
 		for line in (line.rstrip() for line in file_open.readlines()):
 			result_line=re.match(r"^\d+", line)
-			if result_line is not None:
-				print(line)
+#			if result_line is not None:
+#				print(line)
 		file_open.close()
 sys.exit()
 
