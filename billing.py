@@ -15,6 +15,8 @@ direction_ok = 0
 trunk_ok = 0
 
 def direction_function(direction_fun, date_time, extension_number, trunk, number_to, call_duration):
+	print('ZZZZZZ')
+'''
 	if direction_fun=='all':
 		print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
 	elif direction_fun=='city':
@@ -56,6 +58,7 @@ def direction_function(direction_fun, date_time, extension_number, trunk, number
 			
 	else:
 		print('Error_02: Номер '+number_to+'не подходит ни в одно из направлений!')
+'''
 #python3.6 billing.py 2019.03.05 00:00:00 2019.03.06 23:59:59 all all Planeta
 for param in sys.argv:
 	array.append(param)
@@ -145,14 +148,20 @@ else:
 	array_direction.append(array[6])
 #	print(array_direction)
 for dir_tr in array_trunk:
-	for file_tarif in array_direction:
-		file_open = open (str(dir_trunk)+'/'+str(dir_tr)+'/'+file_tarif+'.csv','r')
-		for line in (line.rstrip() for line in file_open.readlines()):
-			result_line=re.match(r"^\d+", line)
-#			if result_line is not None:
-#				print(line)
-		file_open.close()
-sys.exit()
+#	for file_tarif in array_direction:
+	tree = os.walk(dir_trunk+'/'+dir_tr)
+	for i in tree:
+		print(i[2])
+		xz=i[2]
+		for file_i in range(len(xz)):
+			print(xz[file_i])
+#		file_open = open (str(dir_trunk)+'/'+str(dir_tr)+'/'+file_tarif+'.csv','r')
+#		for line in (line.rstrip() for line in file_open.readlines()):
+#			result_line=re.match(r"^\d+", line)
+##			if result_line is not None:
+##				print(line)
+#		file_open.close()
+#sys.exit()
 
 asteriskcdrdb = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 cursor = asteriskcdrdb.cursor()
