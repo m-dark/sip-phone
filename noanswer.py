@@ -125,6 +125,9 @@ cursor.execute(sql)
 for row in cursor:
 	if row[0]!='':
 		restart=1
+	file_log_followme=open('/etc/asterisk/script/log/followme.log', 'a')
+	file_log_followme.write(str(date_time+"\t"+'В AD у номера '+row[0]+' удалили переадресацию'+"\n"))
+	file_log_followme.close()
 	del_sql="""DELETE FROM findmefollow WHERE `grpnum`='%(num)s'"""%{"num":row[0]}
 	cursor.execute(del_sql)
 	db.commit()
