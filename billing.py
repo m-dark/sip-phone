@@ -8,57 +8,41 @@ from datetime import datetime
 #date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
 array = []
 extension = set(['all'])
-direction = set(['all','city','810','710','610','89','79','69','8_rf','7_rf','6_rf','77','10'])
+direction = set(['all','city','810','710','610','89','79','69','8','7','6','77','10'])
 trunk = set(['all'])
+tarif = dict()
+info_extension_price = dict()
+extension_price = dict()
 extension_ok = 0
 direction_ok = 0
 trunk_ok = 0
 
-def direction_function(direction_fun, date_time, extension_number, trunk, number_to, call_duration):
-	print('ZZZZZZ')
-'''
-	if direction_fun=='all':
-		print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='city':
-		if re.match(r"^\d{6,7}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='810':
-		if re.match(r"^810\d{4,16}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='710':
-		if re.match(r"^710\d{4,16}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='610':
-		if re.match(r"^610\d{4,16}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='89':
-		if re.match(r"^89\d{9}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='79':
-		if re.match(r"^79\d{9}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='69':
-		if re.match(r"^69\d{9}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='8_rf':
-		if re.match(r"^8[348]\d{9}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='7_rf':
-		if re.match(r"^7[348]\d{9}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='6_rf':
-		if re.match(r"^6[348]\d{9}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='77':
-		if re.match(r"^77\d{9}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration))
-	elif direction_fun=='10':
-		if re.match(r"^\d{10}$", number_to) is not None:
-			print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration)+' Error_03: Надо разобраться куда это звонят!')
-			
+def direction_function(date_time, extension_number, trunk, number_to, call_duration, *direction_fun):
+	minutes=int()
+	prefix_direction_yes=0
+	minutes_and_sec=divmod(call_duration,60)
+	if minutes_and_sec[1] > 0:
+		minutes=minutes_and_sec[0]+1
 	else:
-		print('Error_02: Номер '+number_to+'не подходит ни в одно из направлений!')
-'''
+		minutes=minutes_and_sec[0]
+	result_number_to=re.match(r"^\d{6,7}$", number_to)
+	if result_number_to is not None:
+		number_to='city'+number_to
+	for direction_fun_i in direction_fun:
+		number_prefix=number_to
+		while len(number_prefix)>=1 and prefix_direction_yes==0:
+			if tarif[trunk][str(direction_fun_i)].get(number_prefix) is not None:
+#				print(number_prefix)
+				prefix_direction_yes=1
+				break
+			number_prefix=number_prefix[:-1]
+
+	if prefix_direction_yes==0:
+		print('Error_09: Нет префикса для номера '+number_to+' в файлах с тарифами '+str(dir_trunk)+'/'+trunk+'/')
+
+#	print(str(date_time)+' '+str(extension_number)+' '+str(trunk)+' '+str(number_to)+' '+str(call_duration)+' Error_03: Надо разобраться куда это звонят!')
+#	print('Error_02: Номер '+number_to+'не подходит ни в одно из направлений!')
+
 #python3.6 billing.py 2019.03.05 00:00:00 2019.03.06 23:59:59 all all Planeta
 for param in sys.argv:
 	array.append(param)
@@ -128,39 +112,63 @@ if trunk_ok == 0:
 #print(extension)
 
 array_trunk = []
-array_direction = []
+#array_direction = []
 dir_trunk = '/etc/asterisk/script/billing'
 if array[7]=='all':
 	for tr in trunk:
 		if tr != 'all':
 			array_trunk.append(tr)
-#	print(array_trunk)
 else:
 	array_trunk.append(array[7])
-#	print(array_trunk)
 
-if array[6]=='all':
-	for dr in direction:
-		if dr != 'all':
-			array_direction.append(dr)
-#	print(array_direction)
-else:
-	array_direction.append(array[6])
-#	print(array_direction)
+#if array[6]=='all':
+#	for dr in direction:
+#		if dr != 'all' and dr != 'city':
+#			array_direction.append(dr)
+##	print(array_direction)
+#else:
+#	array_direction.append(array[6])
+##	print(array_direction)
+
 for dir_tr in array_trunk:
-#	for file_tarif in array_direction:
+	tarif[dir_tr]={}
+	print(dir_tr)
 	tree = os.walk(dir_trunk+'/'+dir_tr)
 	for i in tree:
-		print(i[2])
 		xz=i[2]
 		for file_i in range(len(xz)):
-			print(xz[file_i])
-#		file_open = open (str(dir_trunk)+'/'+str(dir_tr)+'/'+file_tarif+'.csv','r')
-#		for line in (line.rstrip() for line in file_open.readlines()):
-#			result_line=re.match(r"^\d+", line)
-##			if result_line is not None:
-##				print(line)
-#		file_open.close()
+#			print(xz[file_i])
+			file_open = open (str(dir_trunk)+'/'+str(dir_tr)+'/'+xz[file_i],'r')
+			direction_tarif=xz[file_i].split('.')
+			tarif[dir_tr][direction_tarif[0]]={}
+			for line in (line.rstrip() for line in file_open.readlines()):
+				result_line=re.match(r"^\d{1,11}\;([ \-\.А-Яа-я0-9])+\;([ \-А-Яа-я])+\;((\d+\,\d+)|\d+)", line)
+				if result_line is not None:
+					prefix_number=line.split(';')
+					if tarif[dir_tr][direction_tarif[0]].get(direction_tarif[0]+prefix_number[0]) is None:
+						tarif[dir_tr][direction_tarif[0]][direction_tarif[0]+prefix_number[0]]={}
+						tarif[dir_tr][direction_tarif[0]][direction_tarif[0]+prefix_number[0]]['counter']=int()
+					tarif[dir_tr][direction_tarif[0]][direction_tarif[0]+prefix_number[0]]['counter']+=1
+					tarif[dir_tr][direction_tarif[0]][direction_tarif[0]+prefix_number[0]]['city']=prefix_number[1]
+					tarif[dir_tr][direction_tarif[0]][direction_tarif[0]+prefix_number[0]]['region']=prefix_number[2]
+					tarif[dir_tr][direction_tarif[0]][direction_tarif[0]+prefix_number[0]]['price']=prefix_number[3]
+				else:
+					print('Error_05: В строке '+"\t"+line+' файла '+"\t"+str(dir_trunk)+'/'+str(dir_tr)+'/'+xz[file_i]+' ошибка!')
+					sys.exit()
+			file_open.close()
+mayak=0
+array_direction_all=[]
+for key_trunk in tarif:
+	if ((array[6] != 'all' and array[7] != 'all') and (tarif[key_trunk].get(array[6]) is None)):
+		mayak=1
+		print('Error_08: Нет файла с тарифами для направления '+array[6]+' в каталоге '+str(dir_trunk)+'/'+str(dir_tr)+', есть только для направлений: ')
+	for key_direction in tarif[key_trunk]:
+		if mayak==1:
+			print(key_direction)
+		array_direction_all.append(key_direction)
+		for key_prefix in tarif[key_trunk][key_direction]:
+			if tarif[key_trunk][key_direction][key_prefix]['counter'] > 1:
+				print('Error_06: Для транка '+str(key_trunk)+' и направления '+str(key_direction)+' префикс '+str(key_prefix)+' прописан '+str(tarif[key_trunk][key_direction][key_prefix]['counter'])+' раз(а)!')
 #sys.exit()
 
 asteriskcdrdb = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
@@ -184,13 +192,13 @@ for row in cursor:
 		trunk_finite=trunk_name[1]
 		number_to=trunk_name[2].split(',')[0]
 	else:
-		print('Error_01: '+str(row)+' Не понятно что за транк!')
+		print('Error_04: '+str(row)+' Не понятно что за транк!')
 		continue
 	if array[7]!='all' and array[7]==trunk_finite:
-		direction_function(array[6],row[0],row[1],trunk_finite,number_to,row[3])
+		direction_function(row[0],row[1],trunk_finite,number_to,row[3],*array_direction_all)
 #		print(str(row[0])+' '+str(row[1])+' '+trunk_finite+' '+number_to+' '+str(row[3]))
 	elif array[7]=='all':
-		direction_function(array[6],row[0],row[1],trunk_finite,number_to,row[3])
+		direction_function(row[0],row[1],trunk_finite,number_to,row[3],*array_direction_all)
 #		print(str(row[0])+' '+str(row[1])+' '+trunk_finite+' '+number_to+' '+str(row[3]))
 #	if row[2] == 'all':
 #		print(row)
