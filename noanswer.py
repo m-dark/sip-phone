@@ -95,10 +95,10 @@ for row in cursor:
 					grplist=row_number+reshotka
 				else:
 					grplist=grplist+"-"+row_number+reshotka
+			postdest="ext-local,"+row[0]+",dest"
 			file_log_followme=open('/etc/asterisk/script/log/followme.log', 'a')
 			file_log_followme.write(str(date_time+"\t"+'Для номера '+row[0]+' прописали переадресацию с параметрами: '+list_ring_strategy[int(list_param[1])-1]+','+list_param[3]+','+grplist+','+postdest+','+list_param[2]+"\n"))
 			file_log_followme.close()
-			postdest="ext-local,"+row[0]+",dest"
 			ins_sql="""INSERT INTO findmefollow (grpnum,strategy,grptime,grppre,grplist,postdest,dring,rvolume,pre_ring,ringing,calendar_enable,calendar_match) VALUES ('%(grpnum)s','%(strat)s','%(grptime)s','','%(grpl)s','%(postd)s','','','%(pre_ring)s','Ring','0','yes')"""%{"grpnum":row[0],"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grpl":grplist,"postd":postdest,"pre_ring":list_param[2]}
 			ins_str='/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/followme/'
 			ins_zn=['changecid','fixedcid','grpconf','grplist','postdest','ddial','grptime','ringing','prering','strategy']
