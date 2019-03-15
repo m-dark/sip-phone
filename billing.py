@@ -13,6 +13,8 @@ trunk = set(['all'])
 tarif = dict()
 info_extension_price = dict()
 info_extension_price_p = dict()
+info_all_extension =  dict()
+info_all_extension_price =  dict()
 extension_counter = dict()
 extension_minutes = dict()
 extension_price = dict()
@@ -20,7 +22,7 @@ extension_ok = 0
 direction_ok = 0
 trunk_ok = 0
 
-def direction_function(date_time, extension_number, trunk, number_to, call_duration, *direction_fun):
+def direction_function(date_time, extension_number, trunk, number_to, call_duration, stat_duration_extension, *direction_fun):
 	direction_fun_iy='Error'
 	minutes=int()
 	prefix_direction_yes=0
@@ -64,6 +66,28 @@ def direction_function(date_time, extension_number, trunk, number_to, call_durat
 		info_extension_price[trunk][direction_fun_iy][number_prefix_end]['price']+=int(minutes)*float(str(tarif[trunk][direction_fun_iy][number_prefix_end]['price']).replace(',' ,'.'))
 		info_extension_price_p[trunk][direction_fun_iy][number_prefix_end]+=int(minutes)*float(str(tarif[trunk][direction_fun_iy][number_prefix_end]['price']).replace(',' ,'.'))
 
+		if info_all_extension.get(trunk) is None:
+			info_all_extension[trunk]={}
+			info_all_extension_price[trunk]={}
+		if info_all_extension[trunk].get(direction_fun_iy) is None:
+			info_all_extension[trunk][direction_fun_iy]={}
+			info_all_extension_price[trunk][direction_fun_iy]={}
+		if info_all_extension[trunk][direction_fun_iy].get(number_prefix_end) is None:
+			info_all_extension[trunk][direction_fun_iy][number_prefix_end]={}
+			info_all_extension_price[trunk][direction_fun_iy][number_prefix_end]={}
+
+		if stat_duration_extension=='all' or stat_duration_extension==number_prefix_end:
+			if info_all_extension[trunk][direction_fun_iy][number_prefix_end].get(extension_number) is None:
+				info_all_extension[trunk][direction_fun_iy][number_prefix_end][extension_number]={}
+				info_all_extension[trunk][direction_fun_iy][number_prefix_end][extension_number]['counter']=int()
+				info_all_extension[trunk][direction_fun_iy][number_prefix_end][extension_number]['minut']=int()
+				info_all_extension[trunk][direction_fun_iy][number_prefix_end][extension_number]['price']=float()
+				info_all_extension_price[trunk][direction_fun_iy][number_prefix_end][extension_number]=float()
+			info_all_extension[trunk][direction_fun_iy][number_prefix_end][extension_number]['counter']+=1
+			info_all_extension[trunk][direction_fun_iy][number_prefix_end][extension_number]['minut']+=minutes
+			info_all_extension[trunk][direction_fun_iy][number_prefix_end][extension_number]['price']+=int(minutes)*float(str(tarif[trunk][direction_fun_iy][number_prefix_end]['price']).replace(',' ,'.'))
+			info_all_extension_price[trunk][direction_fun_iy][number_prefix_end][extension_number]+=int(minutes)*float(str(tarif[trunk][direction_fun_iy][number_prefix_end]['price']).replace(',' ,'.'))
+
 		if extension_counter.get(extension_number) is None:
 			extension_counter[extension_number]=int()
 			extension_minutes[extension_number]=int()
@@ -71,6 +95,8 @@ def direction_function(date_time, extension_number, trunk, number_to, call_durat
 		extension_counter[extension_number]+=1
 		extension_minutes[extension_number]+=int(minutes)
 		extension_price[extension_number]+=int(minutes)*float(str(tarif[trunk][direction_fun_iy][number_prefix_end]['price']).replace(',' ,'.'))
+##	else:
+##		print('Error_09: Нет префикса для номера '+number_to+' в файлах с тарифами '+str(dir_trunk)+'/'+trunk+'/')
 
 for param in sys.argv:
 	array.append(param)
@@ -214,13 +240,13 @@ for row in cursor:
 		if array[6]!='all':
 			array_direction_all=[]
 			array_direction_all.append(array[6])
-		direction_function(row[0],row[1],trunk_finite,number_to,row[3],*array_direction_all)
+		direction_function(row[0],row[1],trunk_finite,number_to,row[3],array[8],*array_direction_all)
 #		print(str(row[0])+' '+str(row[1])+' '+trunk_finite+' '+number_to+' '+str(row[3]))
 	elif array[7]=='all':
 		if array[6]!='all':
 			array_direction_all=[]
 			array_direction_all.append(array[6])
-		direction_function(row[0],row[1],trunk_finite,number_to,row[3],*array_direction_all)
+		direction_function(row[0],row[1],trunk_finite,number_to,row[3],array[8],*array_direction_all)
 #		print(str(row[0])+' '+str(row[1])+' '+trunk_finite+' '+number_to+' '+str(row[3]))
 
 cursor.close()
@@ -230,11 +256,16 @@ for key_trunk in info_extension_price_p:
 	print("\n"+'========================================================================================'+"\n"+'Транк: '+key_trunk)
 	for key_direction in info_extension_price_p[key_trunk]:
 		print('========================================================================================'+"\n"+'Направление: '+key_direction+"\n"+'----------------------------------------------------------------------------------------')
-#		for key_pref in info_extension_price_p[key_trunk][key_direction]:
 		for key_pref in sorted(info_extension_price_p[key_trunk][key_direction].items(), key=lambda x:x[1], reverse=True):
-#			print("%-11s %-50s %-8s %-10s %-10s" % (key_pref[0],str(info_extension_price[key_trunk][key_direction][key_pref[0]]['city']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['counter']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['minut']),str(round(info_extension_price_p[key_trunk][key_direction][key_pref[0]]))))
 			print("%-11s %-50s %-8s %-10s %-10s" % (key_pref[0],str(info_extension_price[key_trunk][key_direction][key_pref[0]]['city']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['counter']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['minut']),str(round(key_pref[1], 1))))
+			if info_all_extension_price[key_trunk][key_direction].get(key_pref[0]) is not None:
+				for key_extension_number in sorted(info_all_extension_price[key_trunk][key_direction][str(key_pref[0])].items(), key=lambda x:x[1], reverse=True):
+					print("%-4s %-55s %-8s %-10s %-10s" % ('    |_',key_extension_number[0],str(info_all_extension[key_trunk][key_direction][key_pref[0]][key_extension_number[0]]['counter']),str(info_all_extension[key_trunk][key_direction][key_pref[0]][key_extension_number[0]]['minut']),str(round(key_extension_number[1], 1))))
+			else:
+				continue
 print("\n"+'===================================================================')
+print('|Номер | Попыток| Минут    | Рублей|')
+print('-----------------------------------')
 for number_price in sorted(extension_price.items(), key=lambda x:x[1], reverse=True):
-	print("%-7s %-8s %-10s %-10s" % (str(number_price[0]),extension_counter[number_price[0]],extension_minutes[number_price[0]],str(round(number_price[1]))))
+	print("%-8s %-8s %-10s %-10s" % (str(number_price[0]),extension_counter[number_price[0]],extension_minutes[number_price[0]],str(round(number_price[1]))))
 print("\n"+'===================================================================')
