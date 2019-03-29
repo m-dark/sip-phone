@@ -95,8 +95,8 @@ def direction_function(date_time, extension_number, trunk, number_to, call_durat
 		extension_counter[extension_number]+=1
 		extension_minutes[extension_number]+=int(minutes)
 		extension_price[extension_number]+=int(minutes)*float(str(tarif[trunk][direction_fun_iy][number_prefix_end]['price']).replace(',' ,'.'))
-##	else:
-##		print('Error_09: Нет префикса для номера '+number_to+' в файлах с тарифами '+str(dir_trunk)+'/'+trunk+'/')
+	else:
+		print('Error_09: Нет префикса для номера '+number_to+' в файлах с тарифами '+str(dir_trunk)+'/'+trunk+'/')
 
 for param in sys.argv:
 	array.append(param)
@@ -216,9 +216,9 @@ for key_trunk in tarif:
 asteriskcdrdb = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 cursor = asteriskcdrdb.cursor()
 if array[5]=='all':
-	cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 4) AND (LENGTH(dst) > 4) AND (dst != 'hangup') AND (billsec != '0') AND (lastdata != '')", (array[1], array[2], array[3], array[4]))
+	cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 5) AND (LENGTH(dst) > 5) AND (dst != 'hangup') AND (billsec != '0') AND (lastdata != '')", (array[1], array[2], array[3], array[4]))
 else:
-	cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 4) AND (LENGTH(dst) > 4) AND (dst != 'hangup') AND (billsec != '0') AND (lastdata != '') AND (cnum = %s)", (array[1], array[2], array[3], array[4], array[5]))
+	cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 5) AND (LENGTH(dst) > 5) AND (dst != 'hangup') AND (billsec != '0') AND (lastdata != '') AND (cnum = %s)", (array[1], array[2], array[3], array[4], array[5]))
 ##python3.6 billing.py 2019.01.01 00:00:00 2019.03.07 23:00:00 all(trunk) all(direction) all(number)
 ##cursor.execute("SELECT calldate, cnum, lastdata, billsec FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (LENGTH(cnum) < 4) AND (LENGTH(dst) > 3) AND (dst != 'hangup') AND (billsec != '0')", (array[1], array[2], array[3], array[4]))
 #               "SELECT calldate, cnum, lastdata, billsec from cdr WHERE (calldate between '2019-03-01 00:00:00' and '2019-03-06 09:59:59') and (LENGTH(cnum) < 4) and (LENGTH(dst) > 3) and (dst != 'hangup') and (billsec != '0');
