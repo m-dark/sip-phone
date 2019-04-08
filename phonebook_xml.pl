@@ -54,13 +54,14 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
 close($freepbx_pass);
 
 my $dbasterisk = DBI->connect("DBI:mysql:$db:$host:$port",$user,$pass,{ mysql_enable_utf8 => 1 });
-my $sth = $dbasterisk->prepare("SELECT name,extension FROM users;");
+my $sth = $dbasterisk->prepare("SELECT name,extension FROM users ORDER BY extension;");
 $sth->execute; # исполняем запрос
 open (my $file, '>:encoding(UTF-8)', "$dir/phonebook.xml") || die "Error opening file: phonebook.xml $!";
 print $file "\<\?xml version=\"1.0\"\?\>\n\<YealinkIPPhoneDirectory\>\n";
 while (my $ref = $sth->fetchrow_arrayref){
         my $name = $$ref[0];
         my $extension = $$ref[1];
+        $invisible_yes = 0;
         foreach my $invisible (@invisible){
 		if($extension == $invisible){
 			$invisible_yes++;
