@@ -97,8 +97,8 @@ def direction_function(date_time, extension_number, trunk, number_to, call_durat
 		extension_counter[extension_number]+=1
 		extension_minutes[extension_number]+=int(minutes)
 		extension_price[extension_number]+=int(minutes)*float(str(tarif[trunk][direction_fun_iy][number_prefix_end]['price']).replace(',' ,'.'))
-	else:
-		print('Error_09: Нет префикса для номера '+number_to+' в файлах с тарифами '+str(dir_trunk)+'/'+trunk+'/')
+#	else:
+#		print('Error_09: Нет префикса для номера '+number_to+' в файлах с тарифами '+str(dir_trunk)+'/'+trunk+'/')
 
 for param in sys.argv:
 	array.append(param)
