@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-
 #Формирование файлов конфигурации для sip-телефонов Yealink.
 #Файл conf_number_line.conf содержит в себе информацию о том, какие номера прописаны за какими sip-телефонами (mac-адресами) и за каким номером аккаунта на этом sip-телефоне закреплен номер.
 #(В AD есть только номер и mac, но этой информации не достаточно в том случае, если на тел. аппарате прописано несколько аккаунтов (номеров), как на W52P например), в связи с чем, 
@@ -26,6 +25,9 @@ use encoding 'utf-8';
 #use Date::Dumper qw(Dumper);
 #fwconsole userman --syncall --force
 
+my $date_time_file_now = '';
+my $difference_in_time = '';
+my $key_number_line_mac_2 = '';
 my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
 #my $dir = '/autoconfig_old';
 my $dir_conf = '/etc/asterisk/script';						#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
@@ -358,6 +360,7 @@ foreach my $key_mac_model (sort keys %hash_mac_model){
 #Создаем файл конфигурации для sip-телефона.
 open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line.conf") || die "Error opening file: ${date_time_file}_conf_number_line.conf $!";
 	foreach my $key_number_line_mac (sort keys %hash_number_line){
+		$key_number_line_mac_2 = $key_number_line_mac;
 		if ($vpn_root == 1){
 			opendir (VPN_CFG, "$dir/$key_number_line_mac/") || ((mkdir "$dir/$key_number_line_mac/", 0744) && (`cp -f $dir/template_vpn_conf/client.tar $dir/$key_number_line_mac/ && chown -R tftpd:tftpd $dir/$key_number_line_mac`));
 			closedir (VPN_CFG);
@@ -419,7 +422,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				print $file_cfg "openvpn.url = ${tftp_ip}${key_number_line_mac}/client.tar\n";
 			}else{
 				print $file_cfg "network.vpn_enable = 0\n";
-				print $file_cfg "openvpn.url = ${tftp_ip}${key_number_line_mac}/client.tar\n";
+#				print $file_cfg "openvpn.url = ${tftp_ip}${key_number_line_mac}/client.tar\n";
 			}
 ##!!			print $file_cfg "programablekey.2.type = 38\nprogramablekey.2.label = Конт.\nprogramablekey.3.type = 43\nprogramablekey.3.line = 1\n";
 		close ($file_cfg);
@@ -435,7 +438,8 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				}
 			}
 			my $yes_file_cfg_local = `ls -la $dir| grep ${key_number_line_mac}-local.cfg\$`;
-			my $date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
+###			my $date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
+			$date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
 			if ($yes_file_cfg_local eq ''){
 				open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
 					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t Файла нет\n";
@@ -445,8 +449,8 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 			}
 			my $mtime = (stat("$dir/${key_number_line_mac}-local.cfg"))[9];
 			my $time_now = time;
-			my $difference_in_time = ($time_now - $mtime);
-			while ($difference_in_time <= 10){
+			$difference_in_time = ($time_now - $mtime);
+			while (($difference_in_time <= 10) or (($difference_in_time >= 295) and ($difference_in_time <= 305))){
 				$date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
 				open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
 					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
@@ -738,6 +742,9 @@ sub diff_file{
 	
 	my $diff_file = `diff -u $dir_file/$original_file $tmp_dir_file/${date_time_file}_${original_file}`;
 	if ($diff_file ne ''){
+		open(my $file_dir_lo, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
+			print $file_dir_lo "$date_time_file_now\t${key_number_line_mac_2}-local.cfg\t$difference_in_time !!!\n";
+		close($file_dir_lo);
 		$reload_yes = 1;
 		`diff -u $dir_file/${original_file} $tmp_dir_file/${date_time_file}_${original_file} > $history_dir/$date_directory/${date_time_file}_${original_file}.diff`;
 		`cat $dir_file/${original_file} > $history_dir/$date_directory/${date_time_file}_${original_file}`;
