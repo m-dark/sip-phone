@@ -4,9 +4,23 @@ import os
 import subprocess
 import pymysql
 import sys
+import re
 from datetime import datetime
 #date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
 array = []
+dict_number = {}
+dir_conf = '/etc/asterisk/script/';
+freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
+for line in (line.rstrip() for line in freepbx_pass.readlines()):
+	result_line=re.match(r'dict_number = ', line)
+	if result_line is not None:
+		param_fixedcid=line.split(' = ')
+		dict_number_array=param_fixedcid[1].split(',')
+		for num_lin in dict_number_array:
+			number_line=num_lin.split(':')
+			dict_number[str(number_line[0])]=int(number_line[1])
+freepbx_pass.close()
+
 for param in sys.argv:
 	array.append(param)
 db = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
@@ -87,7 +101,7 @@ cursor.close()
 db.close()
 
 print('Number Date time  in  out all')
-dict_number = {'3573079':2, '3573097':37, '3856610':10, '3857018':2, '3857320':2, '3857500':3, '3857710':3, '3857750':4, '3857787':3, '3857900':22, '3857901':2, '3858068':4, '3858088':4, '3859101':2, '3573011':2}
+#dict_number = {'3573079':2, '3573097':37, '3856610':10, '3857018':2, '3857320':2, '3857500':3, '3857710':3, '3857750':4, '3857787':3, '3857900':22, '3857901':2, '3858068':4, '3858088':4, '3859101':2, '3573011':2}
 for key_number in sorted(dictionary.keys()):
 	time_old = 0
 	calls_in = 0
@@ -157,7 +171,7 @@ for key_all in sorted(dict_all.keys()):
 				print(str(datetime.fromtimestamp(time_old))+"\t"+str(calls_in)+"\t"+str(calls_out)+"\t"+str(calls_all))
 				print_call = 0
 #			print(str(datetime.fromtimestamp(key_all))+"\t"+str(dict_all[key_all]['in'])+"\t"+str(dict_all[key_all]['out'])+"\t"+str(dict_all[key_all]['all'])+"\t-\t",end = '')
-			if dict_all[key_all]['all'] >= 5:
+			if dict_all[key_all]['all'] >= 6:
 				print(str(datetime.fromtimestamp(key_all))+" - ",end = '')
 				print_call = 1
 #		else:
