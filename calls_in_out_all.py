@@ -10,6 +10,10 @@ from datetime import datetime
 array = []
 dict_number = {}
 dir_conf = '/etc/asterisk/script/';
+number_all = set(['all'])
+number_all_ok = 0
+dictionary_max = {}
+
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	result_line=re.match(r'dict_number = ', line)
@@ -19,10 +23,44 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 		for num_lin in dict_number_array:
 			number_line=num_lin.split(':')
 			dict_number[str(number_line[0])]=int(number_line[1])
+			number_all.add(str(number_line[0]))
+			if number_line[0] not in dictionary_max:
+				dictionary_max[number_line[0]] = {'in':0, 'out':0, 'all':0}
 freepbx_pass.close()
 
 for param in sys.argv:
 	array.append(param)
+result_date_start=re.match(r'(\d\d\d\d\.\d\d.\d\d)', array[1])
+if result_date_start is None:
+	print('У даты начала не корректный формат (2017.01.01)!')
+	sys.exit()
+result_time_start=re.match(r'(\d\d\:\d\d:\d\d)', array[2])
+if result_time_start is None:
+	print('Время начала имеет не корректный формат (00:00:00)!')
+	sys.exit()
+result_date_end=re.match(r'(\d\d\d\d\.\d\d.\d\d)', array[3])
+if result_date_end is None:
+	print('У конечной даты не корректный формат (2039.01.31)!')
+	sys.exit()
+result_time_end=re.match(r'(\d\d\:\d\d:\d\d)', array[4])
+if result_time_end is None:
+	print('Конечное время имеет не корректный формат (23:59:59)!')
+	sys.exit()
+
+for row_number_all in number_all:
+	if row_number_all == array[5]:
+		number_all_ok = 1
+		break
+if number_all_ok == 0:
+	print('Нет такого номера на сервере!')
+	print('Возможные варианты:'+str(number_all))
+	sys.exit()
+
+result_line=re.match(r'\d{1,3}$', array[6])
+if result_line is None:
+	print('Количество линий может быть только число 1 - 999!')
+	sys.exit()
+
 db = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 cursor = db.cursor()
 cursor.execute("SELECT calldate, duration, uniqueid, did, outbound_cnum FROM cdr WHERE calldate BETWEEN (%s' '%s) AND (%s' '%s) AND (did!='' OR outbound_cnum!='') ORDER BY uniqueid", (array[1], array[2], array[3], array[4]))
@@ -40,6 +78,7 @@ time_end  = 0
 number_in = 0
 number_out = 0
 dictionary = {}
+dtae_new = '1970.01.01'
 for row in cursor:
 	if row[3]!='':
 		if one == 0:
@@ -99,21 +138,25 @@ while i <= int(time_end):
 	i += 1
 cursor.close()
 db.close()
+start_yes = 0
+print('Отчет по перегруженным линиям на номерах:')
 print('____________________________________________________________________________________')
-print('|       |         |                      |               |                 |        | ')
+print('|       |         |                      |               |                 |        |')
 print('| Номер |  Дата   |  Временной период    |   Входящие    |   Исходящие     |   Все  |')
-#dict_number = {'3573079':2, '3573097':37, '3856610':10, '3857018':2, '3857320':2, '3857500':3, '3857710':3, '3857750':4, '3857787':3, '3857900':22, '3857901':2, '3858068':4, '3858088':4, '3859101':2, '3573011':2}
+print('|_______|_________|______________________|_______________|_________________|________|')
 for key_number in sorted(dictionary.keys()):
 	time_old = 0
 	calls_in = 0
 	calls_out = 0
 	calls_all = 0
 	print_call = 0
+	key_number_yes = 0
 #	print(key_number)
 	for key_date in sorted(dictionary[key_number].keys()):
 		if time_old == 0:
 			if dictionary[key_number][key_date]['all'] > 1:
-				print(str(key_number)+' '+str(datetime.fromtimestamp(key_date))+" - ",end = '')
+				print(' '+str(key_number)+' '+str(datetime.fromtimestamp(key_date))+" - ",end = '')
+				dtae_new = only_date[0]
 				print_call = 1
 		else:
 			if((calls_in == dictionary[key_number][key_date]['in'] == 0) and (calls_out == dictionary[key_number][key_date]['out'] == 0) and (calls_all == dictionary[key_number][key_date]['all'] == 0)):
@@ -125,9 +168,23 @@ for key_number in sorted(dictionary.keys()):
 					print_call = 0
 #				if dictionary[key_number][key_date]['all'] >= 1:
 #					print(str(datetime.fromtimestamp(key_date))+" - ",end = '')
+				only_date = str(datetime.fromtimestamp(key_date)).split(' ')
 				if key_number in dict_number:
 					if dictionary[key_number][key_date]['all'] >= dict_number[key_number]:
-						print(str(key_number)+"\t"+str(datetime.fromtimestamp(key_date))+" - ",end = '')
+						if key_number_yes != key_number:
+							if start_yes == 0:
+								start_yes = 1
+							else:
+								print(' ___________________________________________________________________________________')
+							print(' '+str(key_number)+' '+str(datetime.fromtimestamp(key_date))+" - ",end = '')
+							dtae_new = only_date[0]
+							key_number_yes = key_number
+						else:
+							if only_date[0] != dtae_new:
+								print('         '+str(datetime.fromtimestamp(key_date))+" - ",end = '')
+								dtae_new = only_date[0]
+							else:
+								print('                    '+only_date[1]+' - ',end = '')
 #						print(str(key_number+"\t"+str(datetime.fromtimestamp(key_date))+"\t"+str(dictionary[key_number][key_date]['in'])+"\t"+str(dictionary[key_number][key_date]['out'])+"\t"+str(dictionary[key_number][key_date]['all'])))
 						print_call = 1
 				else:
@@ -142,28 +199,51 @@ for key_number in sorted(dictionary.keys()):
 	if print_call == 1:
 		only_time = str(datetime.fromtimestamp(key_date)).split(' ')
 		print(only_time[1]+"\t"+str(calls_in)+"\t"+str(calls_out)+"\t"+str(calls_all))
+print(' ===================================================================================')
+print("\n"+'Отчет по суммарной загрузке всех линий на АТС::')
 print('____________________________________________________________________________')
 print('|         |                      |               |                 |        | ')
 print('|  Дата   |  Временной период    |   Входящие    |   Исходящие     |   Все  |')
+print('|_________|______________________|_______________|_________________|________|')
 dict_all = {}
+dtae_new = '1970.01.01'
 #{'in': 0,'out': 0,'all':0}
 for key_number in sorted(dictionary.keys()):
 #	print(key_number)
-	for key_date in sorted(dictionary[key_number].keys()):
-		if key_date not in dict_all:
-			dict_all[key_date] = {'in':0, 'out':0, 'all':0}
-##		print("\t"+str(key_date)+"\t"+str(dictionary[key_number][key_date]))
-		dict_all[key_date]['in'] = int(dict_all[key_date]['in']) + int(dictionary[key_number][key_date]['in'])
-		dict_all[key_date]['out'] = int(dict_all[key_date]['out']) + int(dictionary[key_number][key_date]['out'])
-		dict_all[key_date]['all'] = int(dict_all[key_date]['all']) + int(dictionary[key_number][key_date]['in']) + int(dictionary[key_number][key_date]['out'])
-#print('-> '+key_number+"\t"+str(key_date)+"\t"+str(dictionary[key_number][key_date]['in']))
+	if array[5] == 'all':
+		for key_date in sorted(dictionary[key_number].keys()):
+			if key_date not in dict_all:
+				dict_all[key_date] = {'in':0, 'out':0, 'all':0}
+##				print("\t"+str(key_date)+"\t"+str(dictionary[key_number][key_date]))
+			dict_all[key_date]['in'] = int(dict_all[key_date]['in']) + int(dictionary[key_number][key_date]['in'])
+			dict_all[key_date]['out'] = int(dict_all[key_date]['out']) + int(dictionary[key_number][key_date]['out'])
+			dict_all[key_date]['all'] = int(dict_all[key_date]['all']) + int(dictionary[key_number][key_date]['in']) + int(dictionary[key_number][key_date]['out'])
+			if key_number not in dictionary_max:
+				dictionary_max[key_number] = {'in':0, 'out':0, 'all':0}
+			if int(dictionary_max[key_number]['all']) < (int(dictionary[key_number][key_date]['in']) + int(dictionary[key_number][key_date]['out'])):
+				dictionary_max[key_number]['in'] = int(dictionary[key_number][key_date]['in'])
+				dictionary_max[key_number]['out'] = int(dictionary[key_number][key_date]['out'])
+				dictionary_max[key_number]['all'] = int(dictionary[key_number][key_date]['in']) + int(dictionary[key_number][key_date]['out'])
+	else:
+		if key_number == array[5]:
+			for key_date in sorted(dictionary[key_number].keys()):
+				if key_date not in dict_all:
+					dict_all[key_date] = {'in':0, 'out':0, 'all':0}
+				dict_all[key_date]['in'] = int(dict_all[key_date]['in']) + int(dictionary[key_number][key_date]['in'])
+				dict_all[key_date]['out'] = int(dict_all[key_date]['out']) + int(dictionary[key_number][key_date]['out'])
+				dict_all[key_date]['all'] = int(dict_all[key_date]['all']) + int(dictionary[key_number][key_date]['in']) + int(dictionary[key_number][key_date]['out'])
+				if key_number not in dictionary_max:
+					dictionary_max[key_number] = {'in':0, 'out':0, 'all':0}
+				if int(dictionary_max[key_number]['all']) < (int(dictionary[key_number][key_date]['in']) + int(dictionary[key_number][key_date]['out'])):
+					dictionary_max[key_number]['in'] = int(dictionary[key_number][key_date]['in'])
+					dictionary_max[key_number]['out'] = int(dictionary[key_number][key_date]['out'])
+					dictionary_max[key_number]['all'] = int(dictionary[key_number][key_date]['in']) + int(dictionary[key_number][key_date]['out'])
 
 time_old = 0
 calls_in = 0
 calls_out = 0
 calls_all = 0
 print_call = 0
-dtae_new = '1970.01.01'
 start_yes = 0
 for key_all in sorted(dict_all.keys()):
 #	if time_old == 0:
@@ -182,13 +262,12 @@ for key_all in sorted(dict_all.keys()):
 				print_call = 0
 #			print(str(datetime.fromtimestamp(key_all))+"\t"+str(dict_all[key_all]['in'])+"\t"+str(dict_all[key_all]['out'])+"\t"+str(dict_all[key_all]['all'])+"\t-\t",end = '')
 			only_date = str(datetime.fromtimestamp(key_all)).split(' ')
-			if dict_all[key_all]['all'] >= 6:
+			if dict_all[key_all]['all'] >= int(array[6]):
 				if only_date[0] != dtae_new:
 					if start_yes == 0:
-						print('|_________|______________________|_______________|_________________|________|')
 						start_yes = 1
 					else:
-						print('_____________________________________________________________________________')
+						print(' ___________________________________________________________________________')
 					print(str(datetime.fromtimestamp(key_all))+" - ",end = '')
 					dtae_new = only_date[0]
 				else:
@@ -200,8 +279,17 @@ for key_all in sorted(dict_all.keys()):
 	calls_in = dict_all[key_all]['in']
 	calls_out = dict_all[key_all]['out']
 	calls_all = dict_all[key_all]['all']
-#only_time = str(datetime.fromtimestamp(key_all)).split(' ')
-#print(only_time[1]+"\t"+str(calls_in)+"\t"+str(calls_out)+"\t"+str(calls_all))
-print('______________________________________________________________________________')
+if print_call == 1:
+	only_time = str(datetime.fromtimestamp(key_all)).split(' ')
+	print(only_time[1]+"\t\t"+str(calls_in)+"\t\t"+str(calls_out)+"\t\t"+str(calls_all))
+print(' ===========================================================================')
 
-
+print("\n"+'Отчет по загрузке всех линий:')
+print(' ____________________________________________________________')
+print('|       |          |           |     |                       |')
+print('| Номер | Входящие | Исходящие |Всего| Всего линий на номере |')
+print('|_______|__________|___________|_____|_______________________|')
+for key_number in sorted(dict_number.keys()):
+	for key_number_max in sorted(dictionary_max.keys()):
+		if key_number == key_number_max:
+			print(' '+str(key_number)+'     '+str(dictionary_max[key_number_max]['in'])+"\t\t"+str(dictionary_max[key_number_max]['out'])+"\t"+'  '+str(dictionary_max[key_number_max]['all'])+"\t\t"+str(dict_number[key_number]))
