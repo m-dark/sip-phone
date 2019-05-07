@@ -13,7 +13,7 @@ dir_conf = '/etc/asterisk/script/'
 number_all = set(['all'])
 number_all_ok = 0
 dictionary_max = {}
-email_report = 'kruk.ivan@itmh.ru'
+email_report = ''
 
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
@@ -341,4 +341,5 @@ calls_log.close()
 #	-m \"\<html\>Для отправки факсимильного сообщения, в процессе разговора, необходимо перевести вызов на номер: $num\<br\>\<br\>$comment\<\/html\>\" 
 #	-s localhost -a $dir_tiff/$num.pdf")
 	
-os.system('/usr/bin/sendEmail -f reports.calls\@karat-npo.ru -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчеты №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a  /etc/asterisk/script/log/calls/'+date_time+'.log')
+if email_report != '':
+	os.system('/usr/bin/sendEmail -f reports.calls\@karat-npo.ru -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчеты №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a  /etc/asterisk/script/log/calls/'+date_time+'.log')
