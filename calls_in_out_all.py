@@ -15,6 +15,17 @@ number_all_ok = 0
 dictionary_max = {}
 email_report = ''
 
+def hms(secs):
+	days = secs//86400
+	hours = (secs - days*86400)//3600
+	minutes = (secs - days*86400 - hours*3600)//60
+	seconds = secs - days*86400 - hours*3600 - minutes*60
+	result = ("{0} day{1}, ".format(days, "s" if days!=1 else "") if days else "") + \
+	("{0} hour{1}, ".format(hours, "s" if hours!=1 else "") if hours else "") + \
+	("{0} minute{1}, ".format(minutes, "s" if minutes!=1 else "") if minutes else "") + \
+	("{0} second{1} ".format(seconds, "s" if seconds!=1 else "") if seconds else "")
+	return result
+	
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	result_line=re.match(r'dict_number = ', line)
@@ -156,6 +167,7 @@ calls_log.write(' ______________________________________________________________
 calls_log.write('|           |          |                   |          |           |     |'+"\r\n")
 calls_log.write('|   Номер   |   Дата   |  Временной период | Входящие | Исходящие | Все |'+"\r\n")
 calls_log.write('|___________|__________|___________________|__________|___________|_____|'+"\r\n")
+total = 0
 for key_number in sorted(dictionary.keys()):
 	time_old = 0
 	calls_in = 0
@@ -163,10 +175,12 @@ for key_number in sorted(dictionary.keys()):
 	calls_all = 0
 	print_call = 0
 	key_number_yes = 0
+	key_date_st = 0
 #	print(key_number)
 	for key_date in sorted(dictionary[key_number].keys()):
 		if time_old == 0:
 			if dictionary[key_number][key_date]['all'] > 1:
+				key_date_st = key_date
 				print("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'), end = '')
 				calls_log.write("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
 				dtae_new = only_date[0]
@@ -178,6 +192,8 @@ for key_number in sorted(dictionary.keys()):
 			elif(((time_old + 1) != key_date) or (calls_in != dictionary[key_number][key_date]['in']) or (calls_out != dictionary[key_number][key_date]['out']) or (calls_all != dictionary[key_number][key_date]['all'])):
 				if print_call == 1 and calls_all > 1:
 					only_time = str(datetime.fromtimestamp(time_old)).split(' ')
+					time_sec = int(time_old) - int(key_date_st) + 1
+					total = total + time_sec
 					print("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all)))
 					calls_log.write("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all))+"\r\n")
 					print_call = 0
@@ -190,18 +206,24 @@ for key_number in sorted(dictionary.keys()):
 							if start_yes == 0:
 								start_yes = 1
 							else:
+								print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
 								print(' _______________________________________________________________________')
+								calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
 								calls_log.write(' _______________________________________________________________________'+"\r\n")
+								total = 0
+							key_date_st = key_date
 							print("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'),end = '')
 							calls_log.write("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
 							dtae_new = only_date[0]
 							key_number_yes = key_number
 						else:
 							if only_date[0] != dtae_new:
+								key_date_st = key_date
 								print("%+12s %+19s %+1s" % ('', str(datetime.fromtimestamp(key_date)), '-'),end = '')
 								calls_log.write("%+12s %+19s %+1s" % ('',str(datetime.fromtimestamp(key_date)),'-'))
 								dtae_new = only_date[0]
 							else:
+								key_date_st = key_date
 								print("%+12s %+19s %+1s" % ('', only_date[1], '-'),end = '')
 								calls_log.write("%+12s %+19s %+1s" % ('', only_date[1], '-'))
 #						print(str(key_number+"\t"+str(datetime.fromtimestamp(key_date))+"\t"+str(dictionary[key_number][key_date]['in'])+"\t"+str(dictionary[key_number][key_date]['out'])+"\t"+str(dictionary[key_number][key_date]['all'])))
@@ -209,6 +231,7 @@ for key_number in sorted(dictionary.keys()):
 				else:
 					if dictionary[key_number][key_date]['all'] > 1:
 #						print('!!!!!'+str(key_number+"\t"+str(datetime.fromtimestamp(key_date))+"\t"+str(dictionary[key_number][key_date]['in'])+"\t"+str(dictionary[key_number][key_date]['out'])+"\t"+str(dictionary[key_number][key_date]['all'])))
+						key_date_st = key_date
 						print("%+12s %+19s %+1s" % ('!'+str(key_number), str(datetime.fromtimestamp(key_date)), '-'), end = '')
 						calls_log.write("%+12s %+19s %+1s" % ('!'+str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
 						print_call = 1
@@ -220,12 +243,15 @@ for key_number in sorted(dictionary.keys()):
 		only_time = str(datetime.fromtimestamp(key_date)).split(' ')
 		print("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all)))
 		calls_log.write("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all))+"\r\n")
+print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
 print(' =======================================================================')
 print("\n"+'2. Отчет по суммарной загрузке всех линий на АТС:')
 print(' ___________________________________________________________')
 print('|          |                   |          |           |     |')
 print('|   Дата   |  Временной период | Входящие | Исходящие | Все |')
 print('|__________|___________________|__________|___________|_____|')
+calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
+total = 0
 calls_log.write(' ======================================================================='+"\r\n")
 calls_log.write("\n"+'2. Отчет по суммарной загрузке всех линий на АТС:'+"\r\n")
 calls_log.write(' ___________________________________________________________'+"\r\n")
@@ -344,3 +370,4 @@ calls_log.close()
 if email_report != '':
 	email_from = email_report.split('@')
 	os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчеты №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a  /etc/asterisk/script/log/calls/'+date_time+'.log')
+
