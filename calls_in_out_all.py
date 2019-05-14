@@ -197,44 +197,37 @@ for key_number in sorted(dictionary.keys()):
 					print("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all)))
 					calls_log.write("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all))+"\r\n")
 					print_call = 0
-#				if dictionary[key_number][key_date]['all'] >= 1:
-#					print(str(datetime.fromtimestamp(key_date))+" - ",end = '')
 				only_date = str(datetime.fromtimestamp(key_date)).split(' ')
 				if key_number in dict_number:
-					if dictionary[key_number][key_date]['all'] >= dict_number[key_number]:
-						if key_number_yes != key_number:
-							if start_yes == 0:
-								start_yes = 1
-							else:
-								print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
-								print(' _______________________________________________________________________')
-								calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
-								calls_log.write(' _______________________________________________________________________'+"\r\n")
-								total = 0
-							key_date_st = key_date
-							print("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'),end = '')
-							calls_log.write("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
-							dtae_new = only_date[0]
-							key_number_yes = key_number
-						else:
-							if only_date[0] != dtae_new:
-								key_date_st = key_date
-								print("%+12s %+19s %+1s" % ('', str(datetime.fromtimestamp(key_date)), '-'),end = '')
-								calls_log.write("%+12s %+19s %+1s" % ('',str(datetime.fromtimestamp(key_date)),'-'))
-								dtae_new = only_date[0]
-							else:
-								key_date_st = key_date
-								print("%+12s %+19s %+1s" % ('', only_date[1], '-'),end = '')
-								calls_log.write("%+12s %+19s %+1s" % ('', only_date[1], '-'))
-#						print(str(key_number+"\t"+str(datetime.fromtimestamp(key_date))+"\t"+str(dictionary[key_number][key_date]['in'])+"\t"+str(dictionary[key_number][key_date]['out'])+"\t"+str(dictionary[key_number][key_date]['all'])))
-						print_call = 1
+					pr_key_number = key_number
 				else:
-					if dictionary[key_number][key_date]['all'] > 1:
-#						print('!!!!!'+str(key_number+"\t"+str(datetime.fromtimestamp(key_date))+"\t"+str(dictionary[key_number][key_date]['in'])+"\t"+str(dictionary[key_number][key_date]['out'])+"\t"+str(dictionary[key_number][key_date]['all'])))
+					pr_key_number = '!'+str(key_number)
+				if ((key_number in dict_number) and (dictionary[key_number][key_date]['all'] >= dict_number[key_number])) or ((key_number not in dict_number) and (dictionary[key_number][key_date]['all'] > 1)):
+					if key_number_yes != key_number:
+						if start_yes == 0:
+							start_yes = 1
+						else:
+							print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
+							print(' _______________________________________________________________________')
+							calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
+							calls_log.write(' _______________________________________________________________________'+"\r\n")
+							total = 0
 						key_date_st = key_date
-						print("%+12s %+19s %+1s" % ('!'+str(key_number), str(datetime.fromtimestamp(key_date)), '-'), end = '')
-						calls_log.write("%+12s %+19s %+1s" % ('!'+str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
-						print_call = 1
+						print("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'),end = '')
+						calls_log.write("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'))
+						dtae_new = only_date[0]
+						key_number_yes = key_number
+					else:
+						if only_date[0] != dtae_new:
+							key_date_st = key_date
+							print("%+12s %+19s %+1s" % ('', str(datetime.fromtimestamp(key_date)), '-'),end = '')
+							calls_log.write("%+12s %+19s %+1s" % ('',str(datetime.fromtimestamp(key_date)),'-'))
+							dtae_new = only_date[0]
+						else:
+							key_date_st = key_date
+							print("%+12s %+19s %+1s" % ('', only_date[1], '-'),end = '')
+							calls_log.write("%+12s %+19s %+1s" % ('', only_date[1], '-'))
+					print_call = 1
 		time_old = key_date
 		calls_in = dictionary[key_number][key_date]['in']
 		calls_out = dictionary[key_number][key_date]['out']
