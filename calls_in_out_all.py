@@ -204,11 +204,12 @@ for key_number in sorted(dictionary.keys()):
 					pr_key_number = '!'+str(key_number)
 				if ((key_number in dict_number) and (dictionary[key_number][key_date]['all'] >= dict_number[key_number])) or ((key_number not in dict_number) and (dictionary[key_number][key_date]['all'] > 1)):
 					if key_number_yes != key_number:
-						print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
-						print(' _______________________________________________________________________')
-						calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
-						calls_log.write(' _______________________________________________________________________'+"\r\n")
-						total = 0
+						if total != 0:
+							print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
+							print(' _______________________________________________________________________')
+							calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
+							calls_log.write(' _______________________________________________________________________'+"\r\n")
+							total = 0
 						key_date_st = key_date
 						print("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'),end = '')
 						calls_log.write("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'))
