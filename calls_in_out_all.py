@@ -196,6 +196,7 @@ calls_log.write('|           |          |                   |          |        
 calls_log.write('|   Номер   |   Дата   |  Временной период | Входящие | Исходящие | Все |'+"\r\n")
 calls_log.write('|___________|__________|___________________|__________|___________|_____|'+"\r\n")
 total = 0
+number_old = 0
 for key_number in sorted(dictionary.keys()):
 	time_old = 0
 	calls_in = 0
@@ -204,16 +205,25 @@ for key_number in sorted(dictionary.keys()):
 	print_call = 0
 	key_number_yes = 0
 	key_date_st = 0
-#	print(key_number)
+	if number_old == 0:
+		number_old = key_number
 	for key_date in sorted(dictionary[key_number].keys()):
 		if time_old == 0:
 			if dictionary[key_number][key_date]['all'] > 1:
+				if total != 0:
+					print("%+66s %+14s" % ('Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total)))
+					print(' _______________________________________________________________________')
+					calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total))+"\r\n")
+					calls_log.write(' _______________________________________________________________________'+"\r\n")
+					total = 0
+					number_old = key_number
 				key_date_st = key_date
 				if dictionary_incoming.get(key_number) is not None:
-					print(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\'')
-					calls_log.write(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\''+"\r\n")
+					print(' Номер '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\'')
+					calls_log.write(' Номер '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\''+"\r\n")
 				print("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'), end = '')
 				calls_log.write("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
+				number_old = key_number
 				dtae_new = only_date[0]
 				key_number_yes = key_number
 				print_call = 1
@@ -236,17 +246,19 @@ for key_number in sorted(dictionary.keys()):
 				if ((key_number in dict_number) and (dictionary[key_number][key_date]['all'] >= dict_number[key_number])) or ((key_number not in dict_number) and (dictionary[key_number][key_date]['all'] > 1)):
 					if key_number_yes != key_number:
 						if total != 0:
-							print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
+							print("%+66s %+14s" % ('Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total)))
 							print(' _______________________________________________________________________')
-							calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
+							calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total))+"\r\n")
 							calls_log.write(' _______________________________________________________________________'+"\r\n")
 							total = 0
+							number_old = key_number
 						key_date_st = key_date
 						if dictionary_incoming.get(key_number) is not None:
-							print(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\'')
-							calls_log.write(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\''+"\r\n")
+							print(' Номер '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\'')
+							calls_log.write(' Номер '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\''+"\r\n")
 						print("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'),end = '')
 						calls_log.write("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'))
+						number_old = key_number
 						dtae_new = only_date[0]
 						key_number_yes = key_number
 					else:
@@ -269,14 +281,14 @@ for key_number in sorted(dictionary.keys()):
 		print("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all)))
 		calls_log.write("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all))+"\r\n")
 if total != 0:
-	print("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total)))
+	print("%+66s %+14s" % ('Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total)))
 print(' =======================================================================')
 print("\n"+'2. Отчет по суммарной загрузке всех линий на АТС:')
 print(' ___________________________________________________________')
 print('|          |                   |          |           |     |')
 print('|   Дата   |  Временной период | Входящие | Исходящие | Все |')
 print('|__________|___________________|__________|___________|_____|')
-calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере все линии были заняты: ', hms(total))+"\r\n")
+calls_log.write("%+66s %+14s" % ('Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total))+"\r\n")
 total = 0
 calls_log.write(' ======================================================================='+"\r\n")
 calls_log.write("\n"+'2. Отчет по суммарной загрузке всех линий на АТС:'+"\r\n")
