@@ -13,6 +13,8 @@ dir_conf = '/etc/asterisk/script/'
 number_all = set(['all'])
 number_all_ok = 0
 dictionary_max = {}
+dictionary_ringgroups = {}
+dictionary_incoming = {}
 email_report = ''
 
 def hms(secs):
@@ -76,6 +78,32 @@ result_line=re.match(r'\d{1,3}$', array[6])
 if result_line is None:
 	print('Количество линий может быть только число 1 - 999!')
 	sys.exit()
+
+asteriskdb = pymysql.connect(host="localhost", user="root", passwd="", db="asterisk", charset='utf8')
+cursor_ringgroups = asteriskdb.cursor()
+cursor_ringgroups.execute("SELECT grpnum, description, grplist FROM ringgroups")
+if cursor_ringgroups != '':
+	for row_ringgroups in cursor_ringgroups:
+		dictionary_ringgroups[row_ringgroups[0]] = {}
+		dictionary_ringgroups[row_ringgroups[0]]['coment'] = row_ringgroups[1]
+		dictionary_ringgroups[row_ringgroups[0]]['extension'] = row_ringgroups[2]
+#		print(row_ringgroups[0]+' '+row_ringgroups[1]+' '+row_ringgroups[2])
+else:
+	print('Warning_01: Ring Groups отсутствуют на сервере!')
+cursor_ringgroups.close()
+
+cursor_incoming = asteriskdb.cursor()
+cursor_incoming.execute("SELECT extension, destination FROM incoming WHERE destination LIKE '%ext-group%'")
+if cursor_incoming != '':
+	for row_incoming in cursor_incoming:
+		incoming = row_incoming[1].split(',')
+		dictionary_incoming[row_incoming[0]] = {}
+		dictionary_incoming[row_incoming[0]] = incoming[1]
+#		print(row_incoming[0]+' '+incoming[1])
+else:
+	print('Warning_02: На сервере нет входящих маршрутов нв группы вызова!')
+cursor_incoming.close()
+asteriskdb.close()
 
 db = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 cursor = db.cursor()
@@ -181,6 +209,9 @@ for key_number in sorted(dictionary.keys()):
 		if time_old == 0:
 			if dictionary[key_number][key_date]['all'] > 1:
 				key_date_st = key_date
+				if dictionary_incoming.get(key_number) is not None:
+					print(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\'')
+					calls_log.write(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\''+"\r\n")
 				print("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'), end = '')
 				calls_log.write("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
 				dtae_new = only_date[0]
@@ -211,6 +242,9 @@ for key_number in sorted(dictionary.keys()):
 							calls_log.write(' _______________________________________________________________________'+"\r\n")
 							total = 0
 						key_date_st = key_date
+						if dictionary_incoming.get(key_number) is not None:
+							print(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\'')
+							calls_log.write(' Номер: '+key_number+' закреплен за группой \''+dictionary_ringgroups[dictionary_incoming[key_number]]['coment']+'\', в которую входят номера: \''+dictionary_ringgroups[dictionary_incoming[key_number]]['extension']+'\''+"\r\n")
 						print("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'),end = '')
 						calls_log.write("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'))
 						dtae_new = only_date[0]
