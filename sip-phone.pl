@@ -450,10 +450,10 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 			my $mtime = (stat("$dir/${key_number_line_mac}-local.cfg"))[9];
 			my $time_now = time;
 			$difference_in_time = ($time_now - $mtime);
-			while (($difference_in_time <= 10) or (($difference_in_time >= 295) and ($difference_in_time <= 305))){
+			while (($difference_in_time <= 10) or (($difference_in_time >= 295) and ($difference_in_time <= 310))){
 				$date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
 				open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
-					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
+#					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
 #					print "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\n";
 				close($file_dir_log);
 				sleep 11;
