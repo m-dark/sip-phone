@@ -67,6 +67,7 @@ for my $dir_and_file_wav (`find /var/spool/asterisk/monitor -type f -name "$wav_
 	my $dir = `dirname "$dir_and_file_wav"`;
 	chomp($dir);
 	`lame -h -b 192 "$dir_and_file_wav" "$dir/$file_wav.mp3"`;
+	`chown asterisk:asterisk "$dir/$file_wav.mp3"`;
 	`rm -f "$dir/$file_wav.wav"`;
 	my $sth_ad = $dbasteriskcdr->do("UPDATE $cdrtable SET recordingfile = '$file_wav.mp3' WHERE $cdrtable.recordingfile = '$file_wav.wav';") || &die_clean("$dbasteriskcdr->errstr. $!\n" );
 }
