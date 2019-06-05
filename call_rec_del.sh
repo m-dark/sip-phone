@@ -13,7 +13,7 @@ else
 fi
 size=`df | grep $dir |  awk '{print $5}' | awk -F'%' '{print $1}'`
 sizenul=`du -sh /var/spool/asterisk/monitor | awk '{print $1}'`
-if [[ sizenul -ne 0 ]]; then
+if [[ $sizenul != 0 ]]; then
 	while [[ "$size" -ge "$limit_size" ]]; do
 		echo $date 'Диск загружен на: '$size'%' >> $logfile
 		cd $dir_del
