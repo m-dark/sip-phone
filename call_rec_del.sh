@@ -12,19 +12,22 @@ else
 	dir_del=$dir
 fi
 size=`df | grep $dir |  awk '{print $5}' | awk -F'%' '{print $1}'`
-while [[ "$size" -ge "$limit_size" ]]; do
-	echo $date 'Диск загружен на: '$size'%' >> $logfile
-	cd $dir_del
-	dir_year=`(ls -lr | tail -n 1) | awk -F' ' '{print $9}'`	#Находим самый старый каталог (сортировка по названию файла) год
-	cd $dir_del/$dir_year
-	dir_month=`(ls -lr | tail -n 1) | awk -F' ' '{print $9}'`	#Находим самый старый каталог (сортировка по названию файла) месяц
-	cd $dir_del/$dir_year/$dir_month
-	dir_day=`(ls -lr | tail -n 1) | awk -F' ' '{print $9}'`		#Находим самый старый каталог (сортировка по названию файла) день
-	file_del=`ls -l $dir_del/$dir_year/$dir_month/$dir_day`
-		echo $date 'Удалили каталог '$dir_del/$dir_year/$dir_month/$dir_day >> $logfile
-		echo $date 'C файлами ' $file_del >> $logfile
-	rm -rf $dir_del/$dir_year/$dir_month/$dir_day			#Удаляем каталог со всеми файлами. один день записей.
-	size=`df -l | grep $dir |  awk '{print $5}' | awk -F'%' '{print $1}'`
-	date=`date +%Y.%m.%d' '%H:%M:%S`
-done
+sizenul=`du -sh /var/spool/asterisk/monitor | awk '{print $1}'`
+if [[ sizenul -ne 0 ]]; then
+	while [[ "$size" -ge "$limit_size" ]]; do
+		echo $date 'Диск загружен на: '$size'%' >> $logfile
+		cd $dir_del
+		dir_year=`(ls -lr | tail -n 1) | awk -F' ' '{print $9}'`	#Находим самый старый каталог (сортировка по названию файла) год
+		cd $dir_del/$dir_year
+		dir_month=`(ls -lr | tail -n 1) | awk -F' ' '{print $9}'`	#Находим самый старый каталог (сортировка по названию файла) месяц
+		cd $dir_del/$dir_year/$dir_month
+		dir_day=`(ls -lr | tail -n 1) | awk -F' ' '{print $9}'`		#Находим самый старый каталог (сортировка по названию файла) день
+		file_del=`ls -l $dir_del/$dir_year/$dir_month/$dir_day`
+			echo $date 'Удалили каталог '$dir_del/$dir_year/$dir_month/$dir_day >> $logfile
+			echo $date 'C файлами ' $file_del >> $logfile
+		rm -rf $dir_del/$dir_year/$dir_month/$dir_day			#Удаляем каталог со всеми файлами. один день записей.
+		size=`df -l | grep $dir |  awk '{print $5}' | awk -F'%' '{print $1}'`
+		date=`date +%Y.%m.%d' '%H:%M:%S`
+	done
+fi
 exit 0
