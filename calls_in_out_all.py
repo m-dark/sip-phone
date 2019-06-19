@@ -407,5 +407,5 @@ calls_log.close()
 	
 if email_report != '':
 	email_from = email_report.split('@')
-	os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчеты №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a  /etc/asterisk/script/log/calls/'+date_time+'.log')
+	os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчет №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a  /etc/asterisk/script/log/calls/'+date_time+'.log')
 
