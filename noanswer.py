@@ -54,7 +54,8 @@ for line_enable_cw in line_cw:
 			if new_line_enable_cw[1] == no_call_waiting:
 				call_waiting_enabled_yes = 1
 		if call_waiting_enabled_yes == 0:
-			upd_cwdb='/usr/sbin/rasterisk -x "database put CW '+new_line_enable_cw[1]+' DISABLED'
+#			upd_cwdb='/usr/sbin/rasterisk -x "database put CW '+new_line_enable_cw[1]+' DISABLED'
+			upd_cwdb='/usr/sbin/rasterisk -x "database del CW '+new_line_enable_cw[1]
 			subprocess.call(upd_cwdb+'"', shell=True)
 			restart=1
 			file_log_cw=open('/etc/asterisk/script/log/busy_dest.log', 'a')
