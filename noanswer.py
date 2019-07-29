@@ -70,7 +70,7 @@ for row in cursor:
 			call_waiting_no_yes = 1
 	if call_waiting_no_yes == 0:
 #		upd_busy_dest_sql="""UPDATE users,devices SET users.name='%(name)s',devices.description='%(name)s' WHERE users.extension=devices.id AND users.extension='%(num)s'"""%{"name":row[2],"num":row[0]}
-		upd_busy_dest_sql="""UPDATE users SET users.busy_dest='%(b_dest)s' WHERE users.extension='%(num)s'"""%{"b_dest":'my-call-hold,s,1',"num":row[0]}
+		upd_busy_dest_sql="""UPDATE users SET users.busy_dest='%(b_dest)s' WHERE users.extension='%(num)s'"""%{"b_dest":'my-call-hold1,s,1',"num":row[0]}
 		cursor.execute(upd_busy_dest_sql)
 		db.commit()
 		restart=1
