@@ -6,7 +6,7 @@ date=`date +%Y.%m.%d' '%H:%M:%S`
 #limit_size=70								#Лимит занятого места в процентах, после которого удаляются файлы.
 dir=$1
 limit_size=$2
-if [[ "$dir" = dev/mapper/SangomaVG-root ]]; then
+if [[ "$dir" = /dev/mapper/SangomaVG-root ]]; then
 	dir_del=/var/spool/asterisk/monitor
 else
 	dir_del=$dir
