@@ -17,7 +17,7 @@ use encoding 'utf-8';
 use DBI;
 use File::Copy;
 
-my $dir = '/etc/asterisk/script';								#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
+my $dir = '/opt/asterisk/script';								#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
 my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
 my $port = '';		#"3306"; # порт, на который открываем соединение
 my $user = '';		#"freepbxuser"; # имя пользователя

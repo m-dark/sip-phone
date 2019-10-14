@@ -8,4 +8,4 @@ else
     end=`date +%Y.%m.%d' 23:59:59' -d"-1 day"`
 fi
 
-/usr/bin/python3.6 /etc/asterisk/script/calls_in_out_all.py $start $end $1 $2
+/usr/bin/python3.6 /opt/asterisk/script/calls_in_out_all.py $start $end $1 $2
