@@ -1,5 +1,5 @@
 #!/bin/sh
-logfile=/etc/asterisk/script/log/call_rec_del.log
+logfile=/opt/asterisk/script/log/call_rec_del.log
 #dir=/var/spool/asterisk/monitor						#Каталог с файлами разговоров.
 #dir=/dev/mapper/SangomaVG-root
 date=`date +%Y.%m.%d' '%H:%M:%S`

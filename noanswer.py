@@ -9,7 +9,7 @@ import MySQLdb
 import subprocess
 from datetime import datetime
 date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
-dir_conf = '/etc/asterisk/script/';
+dir_conf = '/opt/asterisk/script/';
 fixedcid_def = '';
 fw_auto = 0;
 call_waiting_i = []
@@ -58,7 +58,7 @@ for line_enable_cw in line_cw:
 			upd_cwdb='/usr/sbin/rasterisk -x "database del CW '+new_line_enable_cw[1]
 			subprocess.call(upd_cwdb+'"', shell=True)
 			restart=1
-			file_log_cw=open('/etc/asterisk/script/log/busy_dest.log', 'a')
+			file_log_cw=open('/opt/asterisk/script/log/busy_dest.log', 'a')
 			file_log_cw.write(str(date_time+"\t"+'Для номера '+new_line_enable_cw[1]+' в Расширенных настройках выключили Call Waiting (DISABLED)'+"\n"))
 			file_log_cw.close()
 busy_dest_sql="SELECT extension FROM users WHERE `busy_dest` = ''"
@@ -74,7 +74,7 @@ for row in cursor:
 		cursor.execute(upd_busy_dest_sql)
 		db.commit()
 		restart=1
-		file_log_busy_dest=open('/etc/asterisk/script/log/busy_dest.log', 'a')
+		file_log_busy_dest=open('/opt/asterisk/script/log/busy_dest.log', 'a')
 		file_log_busy_dest.write(str(date_time+"\t"+'Для номера '+row[0]+' в Расширенных настройках включили при BUSY дополнительное назначение my-call-hold'+"\n"))
 		file_log_busy_dest.close()
 db.commit()
@@ -122,7 +122,7 @@ if fw_auto == "1":
 							ad = str(row_u[4])+","+str(int(list_ring_strategy.index(str(row_u[1])))+1)+","+str(row_u[12])+","+str(row_u[2])+","+line_fixedcid[1]
 							ad = re.sub('[#]', '', ad)
 					if text != ad:
-						file_log_followme=open('/etc/asterisk/script/log/followme.log', 'a')
+						file_log_followme=open('/opt/asterisk/script/log/followme.log', 'a')
 						file_log_followme.write(str(date_time+"\t"+'У номера '+row[0]+' на сервере FreePBX было: '+ad+' заменили на '+text+"\n"))
 						file_log_followme.close()
 						upd_sql="""UPDATE findmefollow SET `strategy`='%(strat)s', `grptime`='%(grptime)s', `grplist`='%(grp)s', `pre_ring`='%(pre_ring)s' WHERE grpnum='%(num)s'"""%{"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grp":grplist,"num":row[0],"pre_ring":list_param[2]}
@@ -154,7 +154,7 @@ if fw_auto == "1":
 					else:
 						grplist=grplist+"-"+row_number+reshotka
 				postdest="ext-local,"+row[0]+",dest"
-				file_log_followme=open('/etc/asterisk/script/log/followme.log', 'a')
+				file_log_followme=open('/opt/asterisk/script/log/followme.log', 'a')
 				file_log_followme.write(str(date_time+"\t"+'Для номера '+row[0]+' прописали переадресацию с параметрами: '+list_ring_strategy[int(list_param[1])-1]+','+list_param[3]+','+grplist+','+postdest+','+list_param[2]+"\n"))
 				file_log_followme.close()
 				ins_sql="""INSERT INTO findmefollow (grpnum,strategy,grptime,grppre,grplist,postdest,dring,rvolume,pre_ring,ringing,calendar_enable,calendar_match) VALUES ('%(grpnum)s','%(strat)s','%(grptime)s','','%(grpl)s','%(postd)s','','','%(pre_ring)s','Ring','0','yes')"""%{"grpnum":row[0],"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grpl":grplist,"postd":postdest,"pre_ring":list_param[2]}
@@ -182,7 +182,7 @@ if fw_auto == "1":
 	for row in cursor:
 		if row[0]!='':
 			restart=1
-		file_log_followme=open('/etc/asterisk/script/log/followme.log', 'a')
+		file_log_followme=open('/opt/asterisk/script/log/followme.log', 'a')
 		file_log_followme.write(str(date_time+"\t"+'В AD у номера '+row[0]+' удалили переадресацию'+"\n"))
 		file_log_followme.close()
 		del_sql="""DELETE FROM findmefollow WHERE `grpnum`='%(num)s'"""%{"num":row[0]}
@@ -204,7 +204,7 @@ cursor.execute(sql)
 for row in cursor:
 	if row[0]!='':
 		restart=1
-	file_log=open('/etc/asterisk/script/log/rename.log', 'a')
+	file_log=open('/opt/asterisk/script/log/rename.log', 'a')
 	file_log.write(str(date_time + "\t" + ' У номера ' + "\t" + row[0] + ' изменился DN с ' + "\t" + row[1] + ' на ' + "\t" + row[2] + "\n"))
 	file_log.close()
 	spl=row[2].split()
@@ -247,7 +247,7 @@ for line_pjsip_calls in line_calls:
 		hour=line_calls_time[3].split(':')
 		if int(hour[0]) >= 2:
 			channel=line_calls_time[1].split('/')
-			channel_request_hangup_log=open('/etc/asterisk/script/log/channel_request_hangup.log', 'a')
+			channel_request_hangup_log=open('/opt/asterisk/script/log/channel_request_hangup.log', 'a')
 			channel_request_hangup_log.write(str(date_time+"\t"+line_calls_time[1]+"\t"+line_calls_time[3]+"\n"))
 			channel_request_hangup_log.close()
 			subprocess.call('/usr/sbin/rasterisk -x "channel request hangup '+channel[0]+'/'+channel[1]+'"',shell=True)

@@ -9,7 +9,7 @@ from datetime import datetime
 date_time = datetime.strftime(datetime.now(), "%Y-%m-%d_%H%M%S")
 array = []
 dict_number = {}
-dir_conf = '/etc/asterisk/script/'
+dir_conf = '/opt/asterisk/script/'
 number_all = set(['all'])
 number_all_ok = 0
 dictionary_max = {}
@@ -183,7 +183,7 @@ while i <= int(time_end):
 cursor.close()
 db.close()
 start_yes = 0
-calls_log=open('/etc/asterisk/script/log/calls/'+date_time+'.log', 'a')
+calls_log=open('/opt/asterisk/script/log/calls/'+date_time+'.log', 'a')
 
 print('1. Отчет по перегруженным линиям на номерах:')
 print(' _______________________________________________________________________')
@@ -407,5 +407,5 @@ calls_log.close()
 	
 if email_report != '':
 	email_from = email_report.split('@')
-	os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчет №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a  /etc/asterisk/script/log/calls/'+date_time+'.log')
+	os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчет №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a  /opt/asterisk/script/log/calls/'+date_time+'.log')
 

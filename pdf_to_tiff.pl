@@ -11,7 +11,7 @@ use DBI;
 
 use File::Copy;
 
-my $dir = '/etc/asterisk/script';
+my $dir = '/opt/asterisk/script';
 my $dir_tiff = '/mnt/fax_out';
 my $ext = '';
 my $num = 0;
