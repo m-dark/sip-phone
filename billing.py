@@ -166,7 +166,7 @@ if trunk_ok == 0:
 	sys.exit()
 
 array_trunk = []
-dir_trunk = '/etc/asterisk/script/billing'
+dir_trunk = '/opt/asterisk/script/billing'
 if array[7]=='all':
 	for tr in trunk:
 		if tr != 'all':

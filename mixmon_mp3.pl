@@ -15,7 +15,7 @@ use encoding 'utf-8';
 #use Date::Dumper qw(Dumper);
 #fwconsole userman --syncall --force
 
-my $dir_conf = '/etc/asterisk/script';
+my $dir_conf = '/opt/asterisk/script';
 my $file_pass = 'freepbx.pass';
 my $dir_monitor = '/var/spool/asterisk/monitor';
 my $wav_file = $ARGV[0];
@@ -60,7 +60,7 @@ if (defined ($wav_file)){
 my $dbasteriskcdr = DBI->connect("DBI:mysql:$cdrdb:$host:$port",$user,$pass,{ mysql_enable_utf8 => 1 });
 
 for my $dir_and_file_wav (`find /var/spool/asterisk/monitor -type f -name "$wav_file"`){
-#for my $dir_and_file_wav (`find /etc/asterisk/script/06 -type f -name "$wav_file"`){
+#for my $dir_and_file_wav (`find /opt/asterisk/script/06 -type f -name "$wav_file"`){
 	chomp($dir_and_file_wav);
 	my $file_wav = `basename "$dir_and_file_wav" .wav`;
 	chomp($file_wav);

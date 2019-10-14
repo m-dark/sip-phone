@@ -11,7 +11,7 @@ use DBI;
 
 use File::Copy;
 
-my $dir = '/etc/asterisk/script';
+my $dir = '/opt/asterisk/script';
 my $dir_tiff = '/mnt/fax_out';
 my $ext = '';
 my $num = 0;
@@ -31,7 +31,7 @@ $ENV{PATH} = '/bin:/usr/bin:/sbin:/usr/sbin';
 my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
 my $port = '';		#"3306"; # порт, на который открываем соединение
 my $user = '';		#"freepbxuser"; # имя пользователя
-my $pass = '';		#пароль /etc/freepbx.conf
+my $pass = '';		#пароль /opt/freepbx.conf
 my $db = '';		#"asterisk"; # имя базы данных.
 my $user_email = '';	#e-mail для факсов.
 my $domen = '';		#Домен.

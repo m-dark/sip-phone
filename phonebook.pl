@@ -12,7 +12,7 @@ use encoding 'utf-8';
 use DBI;
 use File::Copy;
 
-my $dir = '/etc/asterisk/script';
+my $dir = '/opt/asterisk/script';
 my $history_dir = "$dir/history";
 my $dir_conf_asterisk = '/etc/asterisk';
 my $file_extensions_additional = 'extensions_additional.conf';
@@ -125,7 +125,7 @@ close ($file);
 
 #Печатаем результат
 #ФИО | ВН | ПГН | ГГН | IVR (1) |
-chdir '/etc/asterisk/script';
+chdir '/opt/asterisk/script';
 my $workbook  = Spreadsheet::WriteExcel->new("phonebook_${domen}.xls");
 
 my $worksheet = $workbook->add_worksheet("$domen");

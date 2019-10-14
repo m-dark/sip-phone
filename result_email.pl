@@ -10,7 +10,7 @@ use encoding 'utf-8';
 use DBI;
 use File::Copy;
 
-my $dir = '/etc/asterisk/script';
+my $dir = '/opt/asterisk/script';
 my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
 my $port = '';		#"3306"; # порт, на который открываем соединение
 my $user = '';		#"freepbxuser"; # имя пользователя
