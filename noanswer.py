@@ -43,6 +43,11 @@ restart=0
 
 check_cw=subprocess.check_output('/usr/sbin/rasterisk -x "database show CW"',shell=True,universal_newlines=True)
 line_cw=check_cw.split('\n')
+
+# подумать над включением Ожидание звонка на номерах из файла.
+# EKB
+#ine_cw.remove('/CW/10301                                         : ENABLED                  ')
+
 for line_enable_cw in line_cw:
 	call_waiting_enabled_yes = 0
 #	result_cw=re.match(r'/CW/\d+', line_enable_cw)
@@ -70,7 +75,7 @@ for row in cursor:
 			call_waiting_no_yes = 1
 	if call_waiting_no_yes == 0:
 #		upd_busy_dest_sql="""UPDATE users,devices SET users.name='%(name)s',devices.description='%(name)s' WHERE users.extension=devices.id AND users.extension='%(num)s'"""%{"name":row[2],"num":row[0]}
-		upd_busy_dest_sql="""UPDATE users SET users.busy_dest='%(b_dest)s' WHERE users.extension='%(num)s'"""%{"b_dest":'my-call-hold1,s,1',"num":row[0]}
+		upd_busy_dest_sql="""UPDATE users SET users.busy_dest='%(b_dest)s' WHERE users.extension='%(num)s'"""%{"b_dest":'my-call-hold,s,1',"num":row[0]}
 		cursor.execute(upd_busy_dest_sql)
 		db.commit()
 		restart=1
