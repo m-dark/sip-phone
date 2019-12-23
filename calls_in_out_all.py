@@ -133,7 +133,7 @@ time_end  = 0
 number_in = 0
 number_out = 0
 dictionary = {}
-dtae_new = '1970.01.01'
+date_new = '1970.01.01'
 for row in cursor:
 	if row[3]!='':
 		if one == 0:
@@ -239,7 +239,7 @@ for key_number in sorted(dictionary.keys()):
 				print("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'), end = '')
 				calls_log.write("%+12s %+19s %+1s" % (str(key_number), str(datetime.fromtimestamp(key_date)), '-'))
 				number_old = key_number
-				dtae_new = only_date[0]
+				date_new = only_date[0]
 				key_number_yes = key_number
 				print_call = 1
 		else:
@@ -278,14 +278,14 @@ for key_number in sorted(dictionary.keys()):
 						print("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'),end = '')
 						calls_log.write("%+12s %+19s %+1s" % (str(pr_key_number), str(datetime.fromtimestamp(key_date)), '-'))
 						number_old = key_number
-						dtae_new = only_date[0]
+						date_new = only_date[0]
 						key_number_yes = key_number
 					else:
-						if only_date[0] != dtae_new:
+						if only_date[0] != date_new:
 							key_date_st = key_date
 							print("%+12s %+19s %+1s" % ('', str(datetime.fromtimestamp(key_date)), '-'),end = '')
 							calls_log.write("%+12s %+19s %+1s" % ('',str(datetime.fromtimestamp(key_date)),'-'))
-							dtae_new = only_date[0]
+							date_new = only_date[0]
 						else:
 							key_date_st = key_date
 							print("%+12s %+19s %+1s" % ('', only_date[1], '-'),end = '')
@@ -303,20 +303,20 @@ if total != 0:
 	print("%+66s %+14s" % (' Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total)))
 print(' ==========================================================================')
 print("\n"+'2. Отчет по суммарной загрузке всех линий на АТС:')
-print(' ______________________________________________________________')
-print('|          |                   |          |           |        |')
-print('|   Дата   |  Временной период | Входящие | Исходящие | Вх+Исх |')
-print('|__________|___________________|__________|___________|________|')
+print(' _______________________________________________________________________')
+print('|          |                   |        |          |           |        |')
+print('|   Дата   |  Временной период | Секунд | Входящие | Исходящие | Вх+Исх |')
+print('|__________|___________________|________|__________|___________|________|')
 calls_log.write("%+66s %+14s" % (' Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total))+"\r\n")
 total = 0
 calls_log.write(' =========================================================================='+"\r\n")
 calls_log.write("\n"+'2. Отчет по суммарной загрузке всех линий на АТС:'+"\r\n")
-calls_log.write(' ______________________________________________________________'+"\r\n")
-calls_log.write('|          |                   |          |           |        |'+"\r\n")
-calls_log.write('|   Дата   |  Временной период | Входящие | Исходящие | Вх+Исх |'+"\r\n")
-calls_log.write('|__________|___________________|__________|___________|________|'+"\r\n")
+calls_log.write(' _______________________________________________________________________'+"\r\n")
+calls_log.write('|          |                   |        |          |           |        |'+"\r\n")
+calls_log.write('|   Дата   |  Временной период | Секунд | Входящие | Исходящие | Вх+Исх |'+"\r\n")
+calls_log.write('|__________|___________________|________|__________|___________|________|'+"\r\n")
 dict_all = {}
-dtae_new = '1970.01.01'
+date_new = '1970.01.01'
 #{'in': 0,'out': 0,'all':0}
 for key_number in sorted(dictionary.keys()):
 #	print(key_number)
@@ -355,6 +355,7 @@ calls_out = 0
 calls_all = 0
 print_call = 0
 start_yes = 0
+time_start_count = 0
 for key_all in sorted(dict_all.keys()):
 #	if time_old == 0:
 #		print(str(datetime.fromtimestamp(key_all))+"\t"+str(dict_all[key_all]['in'])+"\t"+str(dict_all[key_all]['out'])+"\t"+str(dict_all[key_all]['all'])+"\t-\t",end = '')
@@ -368,22 +369,23 @@ for key_all in sorted(dict_all.keys()):
 		elif(((time_old + 1) != key_all) or (calls_in != dict_all[key_all]['in']) or (calls_out != dict_all[key_all]['out']) or (calls_all != dict_all[key_all]['all'])):
 			if print_call == 1:
 				only_time = str(datetime.fromtimestamp(time_old)).split(' ')
-				print("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all)))
-				calls_log.write("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all))+"\r\n")
+				count_sec = int(time_old) - int(time_start_count) + 1
+				print("%+9s %+7s %+7s %+10s %+10s" % (only_time[1], count_sec, str(calls_in), str(calls_out), str(calls_all)))
+				calls_log.write("%+9s %+7s %+7s %+10s %+10s" % (only_time[1], count_sec, str(calls_in), str(calls_out), str(calls_all))+"\r\n")
 				print_call = 0
 #			print(str(datetime.fromtimestamp(key_all))+"\t"+str(dict_all[key_all]['in'])+"\t"+str(dict_all[key_all]['out'])+"\t"+str(dict_all[key_all]['all'])+"\t-\t",end = '')
 			only_date = str(datetime.fromtimestamp(key_all)).split(' ')
 			if dict_all[key_all]['all'] >= int(array[6]):
-				if only_date[0] != dtae_new:
+				time_start_count = key_all
+				if only_date[0] != date_new:
 					if start_yes == 0:
 						start_yes = 1
 					else:
-						print(' ______________________________________________________________')
-						calls_log.write(' ______________________________________________________________'+"\r\n")
+						print(' _______________________________________________________________________')
+						calls_log.write(' _______________________________________________________________________'+"\r\n")
 					print("%+20s %+1s" % (str(datetime.fromtimestamp(key_all)), '-') ,end = '')
 					calls_log.write("%+20s %+1s" % (str(datetime.fromtimestamp(key_all)), '-'))
-					
-					dtae_new = only_date[0]
+					date_new = only_date[0]
 				else:
 					print("%+20s %+1s" % (only_date[1], '-'), end = '')
 					calls_log.write("%+20s %+1s" % (only_date[1], '-'))
@@ -396,10 +398,11 @@ for key_all in sorted(dict_all.keys()):
 	calls_all = dict_all[key_all]['all']
 if print_call == 1:
 	only_time = str(datetime.fromtimestamp(key_all)).split(' ')
-	print("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all)))
-	calls_log.write("%+9s %+6s %+10s %+8s" % (only_time[1], str(calls_in), str(calls_out), str(calls_all))+"\r\n")
-print(' ==============================================================')
-calls_log.write(' =============================================================='+"\r\n")
+	count_sec = int(key_all) - int(time_start_count) + 1
+	print("%+9s %+7s %+7s %+10s %+10s" % (only_time[1], count_sec, str(calls_in), str(calls_out), str(calls_all)))
+	calls_log.write("%+9s %+7s %+7s %+10s %+10s" % (only_time[1], count_sec, str(calls_in), str(calls_out), str(calls_all))+"\r\n")
+print(' =======================================================================')
+calls_log.write(' ======================================================================='+"\r\n")
 
 print("\n"+'3. Отчет по загрузке всех линий на всех номерах:')
 print(' ___________________________________________________________________')
