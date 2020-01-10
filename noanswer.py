@@ -12,6 +12,7 @@ date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
 dir_conf = '/opt/asterisk/script/';
 fixedcid_def = '';
 fw_auto = 0;
+aggregate_mwi = 0;
 call_waiting_i = []
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
@@ -32,6 +33,10 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 			call_waiting_i=call_waiting_invisible.split(',')
 		else:
 			call_waiting_i.append(call_waiting_invisible)
+	result_line=re.match(r'aggregate_mwi = \d', line)
+	if result_line is not None:
+		param_aggregate_mwi=line.split(' = ')
+		aggregate_mwi=param_aggregate_mwi[1]
 freepbx_pass.close()
 
 list_ring_strategy = ['ringallv2','ringallv2-prim','ringall','ringall-prim','hunt','hunt-prim','memoryhunt-prim','firstavailable','firstnotonphone']
@@ -256,6 +261,20 @@ for line_pjsip_calls in line_calls:
 			channel_request_hangup_log.write(str(date_time+"\t"+line_calls_time[1]+"\t"+line_calls_time[3]+"\n"))
 			channel_request_hangup_log.close()
 			subprocess.call('/usr/sbin/rasterisk -x "channel request hangup '+channel[0]+'/'+channel[1]+'"',shell=True)
+
+#Включаем на всех номерах "Агрегированные MWI yes"
+if aggregate_mwi == "1":
+	sql="SELECT id FROM sip WHERE keyword = 'aggregate_mwi' and data = 'no'"
+	cursor.execute(sql)
+	for row in cursor:
+		if row[0]!='':
+			file_log=open(str(dir_conf)+'log/aggregate_mwi.log', 'a')
+			file_log.write(str(date_time + "\t" + ' На номере ' + "\t" + row[0] + ' Включили \"Агрегированные MWI\"' + "\n"))
+			file_log.close()
+			upd_sql="""UPDATE sip SET data='yes' WHERE id='%(num)s' AND keyword='aggregate_mwi'"""%{"num":row[0]}
+			cursor.execute(upd_sql)
+			db.commit()
+			restart=1
 
 #Reload check
 sql="SELECT `value` FROM admin WHERE `variable`='need_reload'"
