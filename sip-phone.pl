@@ -559,6 +559,12 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 									$linekey_start = 0;
 								}
 								next;
+							}elsif($mas_line_cfg_local_old[0] =~ /^static.network.vlan.internet_port_enable$/){
+								if ($linekey_start == 1){
+									&print_array_linekey($file_cfg_local,\%hash_linekey);
+									$linekey_start = 0;
+								}
+								next;
 							}elsif($mas_line_cfg_local_old[0] =~ /^linekey.\d{1,2}./){
 								$linekey_start = 1;
 								my @number_linekey = split (/\./,$mas_line_cfg_local_old[0],-1);
