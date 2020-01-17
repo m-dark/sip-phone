@@ -529,11 +529,11 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 						if ($line_cfg_local_old =~ /^\#\!version:/){
 							next;
 						}elsif($line_cfg_local_old =~ /^lang.gui =/){
-							$lang_gui = 1;
-							print $file_cfg_local "lang.gui = Russian\n";
+							next;
 						}elsif($line_cfg_local_old =~ /^lang.wui =/){
-							$lang_wui = 1;
-							print $file_cfg_local "lang.wui = Russian\n";
+							next;
+						}elsif($line_cfg_local_old =~ /^ldap.base =/){
+							next;
 						}elsif ($line_cfg_local_old =~ / = /){
 							my @mas_line_cfg_local_old = split (/ = /,$line_cfg_local_old,-1);
 							if($mas_line_cfg_local_old[0] eq 'static.network.vpn_enable'){
@@ -548,12 +548,6 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 							}elsif($mas_line_cfg_local_old[0] =~ /^account.\d{1,2}.always_fwd.target$/){
 								print $file_cfg_local "$mas_line_cfg_local_old[0] = \%EMPTY\%\n";
 							}elsif($mas_line_cfg_local_old[0] =~ /^handset.\d.name$/){
-								if ($linekey_start == 1){
-									&print_array_linekey($file_cfg_local,\%hash_linekey);
-									$linekey_start = 0;
-								}
-								next;
-							}elsif($mas_line_cfg_local_old[0] =~ /^ldap.base$/){
 								if ($linekey_start == 1){
 									&print_array_linekey($file_cfg_local,\%hash_linekey);
 									$linekey_start = 0;
@@ -589,12 +583,6 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 					if ($linekey_start == 1){
 						&print_array_linekey($file_cfg_local,\%hash_linekey);
 						$linekey_start = 0;
-					}
-					if($lang_gui == 0){
-						print $file_cfg_local "lang.gui = Russian\n";
-					}
-					if($lang_wui == 0){
-						print $file_cfg_local "lang.wui = Russian\n";
 					}
 				close ($file_cfg_local_old);
 			}else{
