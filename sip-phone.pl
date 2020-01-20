@@ -28,8 +28,8 @@ use encoding 'utf-8';
 my $date_time_file_now = '';
 my $difference_in_time = '';
 my $key_number_line_mac_2 = '';
-my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
-#my $dir = '/autoconfig_old';
+#my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
+my $dir = '/autoconfig_old';
 my $dir_conf = '/opt/asterisk/script';						#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
 my $dir_log = '/opt/asterisk/script/log';					#Журналы
 my %hash_mac_model = ();							#Хэш mac-адресов с версией модели Yealinka. (Для проверки корректно внесенной информации о модели sip-телефона на разных учетках AD).
@@ -37,6 +37,8 @@ my %hash_sip_phone = ();							#Хэш содержит mac-адреса sip-т�
 my %hash_number_line = ();							#Хэш содержит mac-адреса sip-телефонов с номерами телефонов и номерами аккаунтов, к которым привязаны эти номера.
 my %hash_dir_files = ();							#Хэш содержит список файлов конфигураций для всех sip-телефонов из каталога autoconf (для удаления sip-учетки на sip-телефонах, которые удалили из AD)
 my %hash_local_cfg = ();							#Хэш содержит фиксированные данные для файлов *.local.cfg (внутренний номер->строка)
+my %hash_local_cfg_mac = ();
+my %hash_named = ();								#номера групп из файла conf_number_line.conf, имеют приоритет!
 my $date_directory = strftime "%Y%m", localtime(time);				#Название каталога с историей изменений. (ГГГГММ)
 my $date_time_file = strftime "%Y-%m-%d_%H%M%S", localtime(time);		#Переменная хранит в себе дату и время запуска скрипта, для понимания, когда вносились изменения.
 my $script_dir = '/opt/asterisk/script';
@@ -52,6 +54,25 @@ my $pass = '';		#пароль /etc/freepbx.conf
 my $db = '';		#"asterisk"; # имя базы данных.
 my $vpn_root = '';	#0|1 (0 - no vpn, 1 - yes vpn)
 my $tftp_ip = '';	#'tftp://X.X.X.X/';
+
+open (my $file_1, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
+	while (defined(my $lime_number_line = <$file_1>)){
+		chomp ($lime_number_line);
+		my @array_number_line = split (/\t/,$lime_number_line,-1);
+		$hash_number_line{$array_number_line[0]}{$array_number_line[1]} = $array_number_line[2];
+		if (defined $array_number_line[3]){
+			$hash_named{$array_number_line[1]}{namedcallgroup} = $array_number_line[3];
+		}else{
+			$hash_named{$array_number_line[1]}{namedcallgroup} = '';
+		}
+		if (defined $array_number_line[4]){
+			$hash_named{$array_number_line[1]}{namedpickupgroup} = $array_number_line[4];
+		}else{
+			$hash_named{$array_number_line[1]}{namedpickupgroup} = '';
+		}
+	}
+close ($file_1);
+
 open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "Error opening file: freepbx.pass $!";
 	while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
 		chomp ($line_freepbx_pass);
@@ -75,30 +96,52 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 			}when('tftp_ip'){
 				$tftp_ip = $array_freepbx_pass[1];
 			}when('local_cfg'){
-				my @array_local_cfg = split (/\;/,$array_freepbx_pass[1],-1);
+				my @array_local_cfg = split(/\;/,$array_freepbx_pass[1],-1);
 				foreach my $numper_local_cfg (@array_local_cfg){
 					my @array_number_local_cfg = split (/:/,$numper_local_cfg,2);
 					$array_number_local_cfg[0] =~ s/ //;
+					my @array_number_local_cfg_mac = split(/ = /,$array_number_local_cfg[1],2);
 					if ($array_number_local_cfg[0] =~ /-/){
-						my @array_number_local_cfg_start_end = split (/-/,$array_number_local_cfg[0],2);
+						my @array_number_local_cfg_start_end = split(/-/,$array_number_local_cfg[0],2);
 						if($array_number_local_cfg_start_end[0] < $array_number_local_cfg_start_end[1]){
 							while($array_number_local_cfg_start_end[0] != ($array_number_local_cfg_start_end[1]+1)){
-								if (exists($hash_local_cfg{$array_number_local_cfg_start_end[0]})){
-									my $old_value = $hash_local_cfg{$array_number_local_cfg_start_end[0]};
-									$hash_local_cfg{$array_number_local_cfg_start_end[0]} = "$old_value"."\n"."$array_number_local_cfg[1]";
-									$array_number_local_cfg_start_end[0]++;
-								}else{
-									$hash_local_cfg{$array_number_local_cfg_start_end[0]} = $array_number_local_cfg[1];
-									$array_number_local_cfg_start_end[0]++;
+								foreach my $key_mac (sort keys %hash_number_line){
+									if (exists($hash_number_line{$key_mac}{$array_number_local_cfg_start_end[0]})){
+##										print("$array_number_local_cfg_start_end[0]\t$key_mac\t$array_number_local_cfg[1]\n");
+										if (exists($hash_local_cfg_mac{$key_mac}{$array_number_local_cfg_mac[0]})){
+##											print("$array_number_local_cfg[1]\n");
+										}else{
+											if (exists($hash_local_cfg{$array_number_local_cfg_start_end[0]})){
+												my $old_value = $hash_local_cfg{$array_number_local_cfg_start_end[0]};
+												$hash_local_cfg{$array_number_local_cfg_start_end[0]} = "$old_value"."\n"."$array_number_local_cfg[1]";
+											}else{
+												$hash_local_cfg{$array_number_local_cfg_start_end[0]} = $array_number_local_cfg[1];
+											}
+										}
+										$hash_local_cfg_mac{$key_mac}{$array_number_local_cfg_mac[0]} = $array_number_local_cfg_mac[1];
+										next;
+									}
 								}
+								$array_number_local_cfg_start_end[0]++;
 							}
 						}
 					}else{
-						if (exists($hash_local_cfg{$array_number_local_cfg[0]})){
-							my $old_value = $hash_local_cfg{$array_number_local_cfg[0]};
-							$hash_local_cfg{$array_number_local_cfg[0]} = "$old_value"."\n"."$array_number_local_cfg[1]";
-						}else{
-							$hash_local_cfg{$array_number_local_cfg[0]} = $array_number_local_cfg[1];
+						foreach my $key_mac (sort keys %hash_number_line){
+							if (exists($hash_number_line{$key_mac}{$array_number_local_cfg[0]})){
+##								print("$array_number_local_cfg[0]\t$key_mac\t$array_number_local_cfg[1]\n");
+								if (exists($hash_local_cfg_mac{$key_mac}{$array_number_local_cfg_mac[0]})){
+##									print("!!$hash_local_cfg{$array_number_local_cfg[0]}!!!!\n");
+								}else{
+									if (exists($hash_local_cfg{$array_number_local_cfg[0]})){
+										my $old_value = $hash_local_cfg{$array_number_local_cfg[0]};
+										$hash_local_cfg{$array_number_local_cfg[0]} = "$old_value"."\n"."$array_number_local_cfg[1]";
+									}else{
+										$hash_local_cfg{$array_number_local_cfg[0]} = $array_number_local_cfg[1];
+									}
+								$hash_local_cfg_mac{$key_mac}{$array_number_local_cfg_mac[0]} = $array_number_local_cfg_mac[1];
+								last;
+								}
+							}
 						}
 					}
 				}
@@ -108,7 +151,6 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 		}
 	}
 close($freepbx_pass);
-my %hash_named = ();								#номера групп из файла conf_number_line.conf, имеют приоритет!
 my %hash_named_db = ();								#номера групп из BD FreePBX
 my %hash_namedgroup = ();							#номера групп из файла namedgroup.conf, содержит шаблоны по автозаполнению групп!
 my %hash_vpn_user_enable = ();							#мак адрес у которого вклбючен VPN
@@ -203,24 +245,6 @@ while (my $ref = $sth_ad->fetchrow_arrayref) {
 	close ($file_ad_sip_phone_txt);
 }
 my $rc = $sth_ad->finish;
-
-open (my $file_1, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
-	while (defined(my $lime_number_line = <$file_1>)){
-		chomp ($lime_number_line);
-		my @array_number_line = split (/\t/,$lime_number_line,-1);
-		$hash_number_line{$array_number_line[0]}{$array_number_line[1]} = $array_number_line[2];
-		if (defined $array_number_line[3]){
-			$hash_named{$array_number_line[1]}{namedcallgroup} = $array_number_line[3];
-		}else{
-			$hash_named{$array_number_line[1]}{namedcallgroup} = '';
-		}
-		if (defined $array_number_line[4]){
-			$hash_named{$array_number_line[1]}{namedpickupgroup} = $array_number_line[4];
-		}else{
-			$hash_named{$array_number_line[1]}{namedpickupgroup} = '';
-		}
-	}
-close ($file_1);
 
 open (my $file_group, '<:encoding(UTF-8)', "$dir_conf/$namedgroup") || die "Error opening file: $namedgroup $!";
 	while (defined(my $line_namedgroup = <$file_group>)){
@@ -465,13 +489,14 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 					next;
 				}
 			}
-			if ((($hash_mac_model{${key_number_line_mac}} eq 'w52') || ($hash_mac_model{${key_number_line_mac}} eq 'w56') || ($hash_mac_model{${key_number_line_mac}} eq 'w60')) && $handset_ok == 0){
+			if ((($hash_mac_model{${key_number_line_mac}} eq 'w52') || ($hash_mac_model{${key_number_line_mac}} eq 'w56') || ($hash_mac_model{${key_number_line_mac}} eq 'w60')) && $handset_ok == 1){
 				foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
-#					if ($key_number_line_number == 555){
-#						print $file_cfg_local "handset."."$hash_number_line{$key_number_line_mac}{$key_number_line_number}".".name = "."Приёмная\n";
-#					}else{
+					my $temp_date = "handset."."$hash_number_line{$key_number_line_mac}{$key_number_line_number}".".name";
+					if (exists($hash_local_cfg_mac{$key_number_line_mac}{$temp_date})){
+						
+					}else{
 						print $file_cfg_local "handset."."$hash_number_line{$key_number_line_mac}{$key_number_line_number}".".name = "."$key_number_line_number\n";
-#					}
+					}
 				}
 			}
 			my $yes_file_cfg_local = `ls -la $dir| grep ${key_number_line_mac}-local.cfg\$`;
@@ -528,15 +553,11 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 						chomp ($line_cfg_local_old);
 						if ($line_cfg_local_old =~ /^\#\!version:/){
 							next;
-						}elsif($line_cfg_local_old =~ /^lang.gui =/){
-							next;
-						}elsif($line_cfg_local_old =~ /^lang.wui =/){
-							next;
-						}elsif($line_cfg_local_old =~ /^ldap.base =/){
-							next;
 						}elsif ($line_cfg_local_old =~ / = /){
-							my @mas_line_cfg_local_old = split (/ = /,$line_cfg_local_old,-1);
-							if($mas_line_cfg_local_old[0] eq 'static.network.vpn_enable'){
+							my @mas_line_cfg_local_old = split (/ = /,$line_cfg_local_old,2);
+							if (exists($hash_local_cfg_mac{$key_number_line_mac}{$mas_line_cfg_local_old[0]})){
+								next;
+							}elsif($mas_line_cfg_local_old[0] eq 'static.network.vpn_enable'){
 								if ($linekey_start == 1){
 									print "!!!!!$file_cfg_local!!!!!!\n";
 									&print_array_linekey($file_cfg_local,\%hash_linekey);
@@ -548,12 +569,6 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 							}elsif($mas_line_cfg_local_old[0] =~ /^account.\d{1,2}.always_fwd.target$/){
 								print $file_cfg_local "$mas_line_cfg_local_old[0] = \%EMPTY\%\n";
 							}elsif($mas_line_cfg_local_old[0] =~ /^handset.\d.name$/){
-								if ($linekey_start == 1){
-									&print_array_linekey($file_cfg_local,\%hash_linekey);
-									$linekey_start = 0;
-								}
-								next;
-							}elsif($mas_line_cfg_local_old[0] =~ /^static.network.vlan.internet_port_enable$/){
 								if ($linekey_start == 1){
 									&print_array_linekey($file_cfg_local,\%hash_linekey);
 									$linekey_start = 0;
@@ -585,24 +600,16 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 						$linekey_start = 0;
 					}
 				close ($file_cfg_local_old);
-			}else{
-##				if (($hash_mac_model{${key_number_line_mac}} eq 'w52') || ($hash_mac_model{${key_number_line_mac}} eq 'w56') || ($hash_mac_model{${key_number_line_mac}} eq 'w60')){
-##					foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
-#						if ($key_number_line_number == 555){
-#							print $file_cfg_local "handset."."$hash_number_line{$key_number_line_mac}{$key_number_line_number}".".name = "."Приёмная\n";
-#						}else{
-##							print $file_cfg_local "handset."."$hash_number_line{$key_number_line_mac}{$key_number_line_number}".".name = "."$key_number_line_number\n";
-#						}
-##					}
-##				}
-#				foreach my $key_number_line_number (sort keys %{$hash_sip_phone{$key_number_line_mac}}){
-#					if (exists($hash_local_cfg{$key_number_line_number})){
-#						print $file_cfg_local "$hash_local_cfg{$key_number_line_number}\n";
-#						next;
+#			}else{
+#				if (($hash_mac_model{${key_number_line_mac}} eq 'w52') || ($hash_mac_model{${key_number_line_mac}} eq 'w56') || ($hash_mac_model{${key_number_line_mac}} eq 'w60')){
+#					foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
+##						if ($key_number_line_number == 555){
+##							print $file_cfg_local "handset."."$hash_number_line{$key_number_line_mac}{$key_number_line_number}".".name = "."Приёмная\n";
+##						}else{
+#							print $file_cfg_local "handset."."$hash_number_line{$key_number_line_mac}{$key_number_line_number}".".name = "."$key_number_line_number\n";
+##						}
 #					}
 #				}
-				print $file_cfg_local "\nlang.gui = Russian\n";
-				print $file_cfg_local "lang.wui = Russian\n";
 			}
 		close ($file_cfg_local);
 
