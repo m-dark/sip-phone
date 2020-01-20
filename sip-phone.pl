@@ -28,8 +28,7 @@ use encoding 'utf-8';
 my $date_time_file_now = '';
 my $difference_in_time = '';
 my $key_number_line_mac_2 = '';
-#my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
-my $dir = '/autoconfig_old';
+my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
 my $dir_conf = '/opt/asterisk/script';						#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
 my $dir_log = '/opt/asterisk/script/log';					#Журналы
 my %hash_mac_model = ();							#Хэш mac-адресов с версией модели Yealinka. (Для проверки корректно внесенной информации о модели sip-телефона на разных учетках AD).
