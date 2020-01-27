@@ -76,12 +76,16 @@ while (my $ref = $sth->fetchrow_arrayref){
 }
 open (my $file_phonebook_cfg, '<:encoding(UTF-8)', "$dir/phonebook.cfg") || die "Error opening file: phonebook.cfg $!";
         while (defined(my $line_phonebook_cfg = <$file_phonebook_cfg>)){
-                chomp ($line_phonebook_cfg);
-                my @array_phonebook_cfg = split (/\t/,$line_phonebook_cfg,-1);
-                print $file "  \<DirectoryEntry\>
+		if($line_phonebook_cfg !~ /^#/){
+			chomp ($line_phonebook_cfg);
+			my @array_phonebook_cfg = split (/\t/,$line_phonebook_cfg,-1);
+			print $file "  \<DirectoryEntry\>
     \<Name\>$array_phonebook_cfg[0]\<\/Name\>
     \<Telephone\>$array_phonebook_cfg[1]\<\/Telephone\>
   \<\/DirectoryEntry\>\n";
+		}else{
+			next;
+		}
         }
 close ($file_phonebook_cfg);
 
