@@ -535,8 +535,10 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				open (my $file_cfg_local_old, '<:encoding(UTF-8)', "$dir/${key_number_line_mac}-local.cfg") || die "Error opening file: ${key_number_line_mac}-local.cfg $!";
 					while (defined(my $line_cfg_local_old = <$file_cfg_local_old>)){
 						chomp ($line_cfg_local_old);
-#						if ($line_cfg_local_old =~ /^\#\!version:/){
-#							next;
+						if ((exists($hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'})) && ($hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'} == 1)){
+							print $file_cfg_local "\#\!version:1.0.0.1\n";
+							$hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'} = 0;
+						}
 						if ((exists($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old})) && ($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} == 1)){
 							print $file_cfg_local "$line_cfg_local_old\n";
 							$hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
@@ -578,8 +580,15 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 								&print_array_linekey($file_cfg_local,\%hash_linekey);
 								$linekey_start = 0;
 							}
-							print $file_cfg_local "$line_cfg_local_old\n";
-							$hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
+							if (exists($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old})){
+								if ($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} != 0){
+									print $file_cfg_local "$line_cfg_local_old\n";
+									$hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
+								}
+							}else{
+								print $file_cfg_local "$line_cfg_local_old\n";
+								$hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
+							}
 						}
 					}
 					foreach my $key_date (sort keys %{$hash_local_cfg_print{$key_number_line_mac}}){
@@ -610,10 +619,13 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 			open (my $file_cfg_local_mac, '>:encoding(UTF-8)', "$dir/${key_number_line_mac}-local.cfg") || die "Error opening file: ${key_number_line_mac}-local.cfg $!";
 			close ($file_cfg_local_mac);
 			open (my $file_cfg_local, '>:encoding(utf-8)', "$tmp_dir/${date_time_file}_${key_number_line_mac}-local.cfg") || die "Error opening file: ${date_time_file}_${key_number_line_mac}-local.cfg $!";
+				if ((exists($hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'})) && ($hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'} == 1)){
+					print $file_cfg_local "\#\!version:1.0.0.1\n";
+					$hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'} = 0;
+				}
 				foreach my $key_date (sort keys %{$hash_local_cfg_print{$key_number_line_mac}}){
 					if ($hash_local_cfg_print{$key_number_line_mac}{$key_date} == 1){
 						print $file_cfg_local "$key_date\n";
-						print("!$key_number_line_mac!**!!!!$key_date!!!!!**!$hash_local_cfg_print{$key_number_line_mac}{$key_date}!\n");
 						$hash_local_cfg_print{$key_number_line_mac}{$key_date} = 0;
 					}
 				}
