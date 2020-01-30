@@ -262,9 +262,9 @@ for key_number in sorted(dictionary.keys()):
 					if key_number_yes != key_number:
 						if total != 0:
 							print("%+66s %+14s" % (' Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total)))
-							print(' _______________________________________________________________________')
+							print(' __________________________________________________________________________')
 							calls_log.write("%+66s %+14s" % (' Суммарное время периодов, когда на номере '+number_old+' все линии были заняты: ', hms(total))+"\r\n")
-							calls_log.write(' _______________________________________________________________________'+"\r\n")
+							calls_log.write(' __________________________________________________________________________'+"\r\n")
 							total = 0
 							number_old = key_number
 						key_date_st = key_date
@@ -429,5 +429,8 @@ calls_log.close()
 	
 if email_report != '':
 	email_from = email_report.split('@')
-	os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру(ам): '+array[5]+'<br>Отчет №2 ,по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a '+str(dir_conf)+'log/calls/'+date_time+'.log')
+	if(array[5] == 'all'):
+		os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По всем номерам. <br>Отчет №2, по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a '+str(dir_conf)+'log/calls/'+date_time+'.log')
+	else:
+		os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру: '+array[5]+'<br>Отчет №2, по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a '+str(dir_conf)+'log/calls/'+date_time+'.log')
 
