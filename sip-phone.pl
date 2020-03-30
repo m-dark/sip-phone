@@ -37,6 +37,8 @@ my %hash_number_line = ();							#Хэш содержит mac-адреса sip-�
 my %hash_dir_files = ();							#Хэш содержит список файлов конфигураций для всех sip-телефонов из каталога autoconf (для удаления sip-учетки на sip-телефонах, которые удалили из AD)
 my %hash_local_cfg_mac = ();
 my %hash_local_cfg_print = ();
+my %hash_cfg_mac = ();
+my %hash_cfg_print = ();							#Хэш содержит mac адреса с индивидуальными настройками в файле "mac".cfg
 my %hash_named = ();								#номера групп из файла conf_number_line.conf, имеют приоритет!
 my $date_directory = strftime "%Y%m", localtime(time);				#Название каталога с историей изменений. (ГГГГММ)
 my $date_time_file = strftime "%Y-%m-%d_%H%M%S", localtime(time);		#Переменная хранит в себе дату и время запуска скрипта, для понимания, когда вносились изменения.
@@ -52,6 +54,8 @@ my $user = '';		#"freepbxuser"; # имя пользователя
 my $pass = '';		#пароль /etc/freepbx.conf
 my $db = '';		#"asterisk"; # имя базы данных.
 my $vpn_root = '';	#0|1 (0 - no vpn, 1 - yes vpn)
+my $internet_port_enable = "111";	#VLan Enable
+my $internet_port_vid = "111";	#Number VLan
 my $tftp_ip = '';	#'tftp://X.X.X.X/';
 
 open (my $file_1, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
@@ -133,6 +137,49 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 						}
 					}
 				}
+			}when('mac_cfg'){
+				my @array_cfg = split(/\;/,$array_freepbx_pass[1],-1);
+				foreach my $numper_cfg (@array_cfg){
+					my @array_number_cfg = split (/:/,$numper_cfg,2);
+					$array_number_cfg[0] =~ s/ //;
+					my @array_number_cfg_mac = split(/ = /,$array_number_cfg[1],2);
+					if ($array_number_cfg[0] =~ /-/){
+						my @array_number_cfg_start_end = split(/-/,$array_number_cfg[0],2);
+						if($array_number_cfg_start_end[0] < $array_number_cfg_start_end[1]){
+							while($array_number_cfg_start_end[0] != ($array_number_cfg_start_end[1]+1)){
+								foreach my $key_mac (sort keys %hash_number_line){
+									if (exists($hash_number_line{$key_mac}{$array_number_cfg_start_end[0]})){
+##										print("$array_number_cfg_start_end[0]\t$key_mac\t$array_number_cfg[1]\n");
+										if (exists($hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]})){
+##											print("$array_number_cfg[1]\n");
+										}else{
+											$hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
+										}
+										$hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]} = $array_number_cfg_mac[1];
+										next;
+									}
+								}
+								$array_number_cfg_start_end[0]++;
+							}
+						}
+					}else{
+						foreach my $key_mac (sort keys %hash_number_line){
+							if (exists($hash_number_line{$key_mac}{$array_number_cfg[0]})){
+##								print("$array_number_cfg[0]\t$key_mac\t$array_number_cfg[1]\t$array_number_cfg_mac[1]\n");
+								if (exists($hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]})){
+								}else{
+									$hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
+								}
+								$hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]} = $array_number_cfg_mac[1];
+								last;
+							}
+						}
+					}
+				}
+			}when('network.vlan.internet_port_enable'){
+				$internet_port_enable = $array_freepbx_pass[1];
+			}when('network.vlan.internet_port_vid'){
+				$internet_port_vid = $array_freepbx_pass[1];
 			}default{
 				next;
 			}
@@ -464,6 +511,26 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 			}else{
 				print $file_cfg "network.vpn_enable = 0\n";
 #				print $file_cfg "openvpn.url = ${tftp_ip}${key_number_line_mac}/client.tar\n";
+			}
+			if (exists($hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_enable'})){
+				print $file_cfg "network.vlan.internet_port_enable = $hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_enable'}\n";
+				delete $hash_cfg_print{$key_number_line_mac}{'network.vlan.internet_port_enable = '.$hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_enable'}};
+			}else{
+				print $file_cfg "network.vlan.internet_port_enable = $internet_port_enable\n";
+			}
+			if (exists($hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'})){
+				if ($hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'} == 0){
+				}else{
+					print $file_cfg "network.vlan.internet_port_vid = $hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'}\n";
+				}
+				delete $hash_cfg_print{$key_number_line_mac}{'network.vlan.internet_port_vid = '.$hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'}};
+			}else{
+				print $file_cfg "network.vlan.internet_port_vid = $internet_port_vid\n";
+			}
+			if (exists($hash_cfg_print{$key_number_line_mac})){
+				foreach my $key_print (keys %{$hash_cfg_print{$key_number_line_mac}}){
+					print $file_cfg "$key_print\n";
+				}
 			}
 ##!!			print $file_cfg "programablekey.2.type = 38\nprogramablekey.2.label = Конт.\nprogramablekey.3.type = 43\nprogramablekey.3.line = 1\n";
 		close ($file_cfg);
