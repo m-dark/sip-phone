@@ -28,7 +28,7 @@ vpn_root = 0
 # Данные для скриптов pdf_to_tiff.pl & phonebook.pl & result_email.pl
 domen = tel.ru
 user_name = test
-user_email = test@fmp.ru
+user_email = test@test.ru
 user_email_phonebook = test@test.ru
 
 # Данные для скрипта noanswer.py
