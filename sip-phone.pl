@@ -153,7 +153,10 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 										if (exists($hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]})){
 ##											print("$array_number_cfg[1]\n");
 										}else{
-											$hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
+											if(($array_number_cfg_mac[0] != 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] != 'network.vlan.internet_port_vid')){
+												$hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
+												print($array_number_cfg[1]);
+											}
 										}
 										$hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]} = $array_number_cfg_mac[1];
 										next;
@@ -168,7 +171,10 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 ##								print("$array_number_cfg[0]\t$key_mac\t$array_number_cfg[1]\t$array_number_cfg_mac[1]\n");
 								if (exists($hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]})){
 								}else{
-									$hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
+									if(($array_number_cfg_mac[0] ne 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] ne 'network.vlan.internet_port_vid')){
+										$hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
+										print($array_number_cfg[1]);
+									}
 								}
 								$hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]} = $array_number_cfg_mac[1];
 								last;
@@ -382,10 +388,23 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 		if((defined ($$ref[3])) && ($$ref[3] =~ /\./)){
 			my @array_ref_3 = split (/\./,$$ref[3],-1);
 			$$ref[3] = $array_ref_3[0];
-			if (($array_ref_3[1] eq 'vpn') || ($array_ref_3[1] eq 'VPN')){
-				$hash_vpn_user_enable{"\L$$ref[2]"} = 1;
-			}else{
-				print "Error 111: VPN\n";;
+			shift(@array_ref_3);
+			foreach my $vpn_or_vlan (@array_ref_3){
+				if (($vpn_or_vlan eq 'vpn') || ($vpn_or_vlan eq 'VPN')){
+					$hash_vpn_user_enable{"\L$$ref[2]"} = 1;
+				}elsif (($vpn_or_vlan =~ /^vlan=/) || ($vpn_or_vlan =~ /^Vlan=/) || ($vpn_or_vlan =~ /^VLAN=/)){
+					my @vlan_number = split (/=/,$vpn_or_vlan,2);
+					if ($vlan_number[1] == 0){
+						$hash_cfg_mac{"\L$$ref[2]"}{'network.vlan.internet_port_enable'} = 0;
+						$hash_cfg_mac{"\L$$ref[2]"}{'network.vlan.internet_port_vid'} = 1;
+
+					}else{
+						$hash_cfg_mac{"\L$$ref[2]"}{'network.vlan.internet_port_enable'} = 1;
+						$hash_cfg_mac{"\L$$ref[2]"}{'network.vlan.internet_port_vid'} = $vlan_number[1];
+					}
+				}else{
+					print "Error 111: VPN or VLAN\n";
+				}
 			}
 		}
 #		print "$$ref[0]\t$$ref[1]\t$$ref[2]\t$$ref[3]\t$$ref[4]\n";
