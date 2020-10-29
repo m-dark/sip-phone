@@ -13,6 +13,7 @@ dir_conf = '/opt/asterisk/script/';
 fixedcid_def = '';
 fw_auto = 0;
 aggregate_mwi = 0;
+call_waiting_yes = 0;
 call_waiting_i = []
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
@@ -24,6 +25,10 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	if result_line is not None:
 		param_fw_auto=line.split(' = ')
 		fw_auto=param_fw_auto[1]
+	result_line=re.match(r'call_waiting_yes = \d+', line)
+	if result_line is not None:
+		param_call_waiting_yes=line.split(' = ')
+		call_waiting_yes=param_call_waiting_yes[1]
 	result_line=re.match(r'call_waiting_invisible = \d+', line)
 	if result_line is not None:
 		param_call_waiting_invisible=line.split(' = ')
@@ -44,50 +49,53 @@ db = MySQLdb.connect(host="localhost", user="root", passwd="", db="asterisk", ch
 cursor = db.cursor()
 restart=0
 
+#Если = 1, то на номерах которые создаются на FreePBX и не прописаны в файле freepbx.pass в переменной call_waiting_invisible= включется фишка: "Оставайтесь на линии абонент занят" (предварительно необходимо еще дополнительное назначение
+if call_waiting_yes == '1':
 #Call Waiting
-
-check_cw=subprocess.check_output('/usr/sbin/rasterisk -x "database show CW"',shell=True,universal_newlines=True)
-line_cw=check_cw.split('\n')
+	check_cw=subprocess.check_output('/usr/sbin/rasterisk -x "database show CW"',shell=True,universal_newlines=True)
+	line_cw=check_cw.split('\n')
 
 # подумать над включением Ожидание звонка на номерах из файла.
 # EKB
 #ine_cw.remove('/CW/10301                                         : ENABLED                  ')
 
-for line_enable_cw in line_cw:
-	call_waiting_enabled_yes = 0
-#	result_cw=re.match(r'/CW/\d+', line_enable_cw)
-	result_cw=re.search(r'ENABLED', line_enable_cw)
-	if result_cw is not None:
-		new_line_enable_cw = line_enable_cw.split(' ')
-		new_line_enable_cw = new_line_enable_cw[0].split('/CW/')
+	for line_enable_cw in line_cw:
+		call_waiting_enabled_yes = 0
+#		result_cw=re.match(r'/CW/\d+', line_enable_cw)
+		result_cw=re.search(r'ENABLED', line_enable_cw)
+		if result_cw is not None:
+			new_line_enable_cw = line_enable_cw.split(' ')
+			new_line_enable_cw = new_line_enable_cw[0].split('/CW/')
+			for no_call_waiting in call_waiting_i:
+				if new_line_enable_cw[1] == no_call_waiting:
+					call_waiting_enabled_yes = 1
+			if call_waiting_enabled_yes == 0:
+#				upd_cwdb='/usr/sbin/rasterisk -x "database put CW '+new_line_enable_cw[1]+' DISABLED'
+				upd_cwdb='/usr/sbin/rasterisk -x "database del CW '+new_line_enable_cw[1]
+				subprocess.call(upd_cwdb+'"', shell=True)
+				restart=1
+				file_log_cw=open(str(dir_conf)+'log/busy_dest.log', 'a')
+				file_log_cw.write(str(date_time+"\t"+'Для номера '+new_line_enable_cw[1]+' в Расширенных настройках выключили Call Waiting (DISABLED)'+"\n"))
+				file_log_cw.close()
+	busy_dest_sql="SELECT extension FROM users WHERE `busy_dest` = ''"
+	cursor.execute(busy_dest_sql)
+	for row in cursor:
+		call_waiting_no_yes = 0
 		for no_call_waiting in call_waiting_i:
-			if new_line_enable_cw[1] == no_call_waiting:
-				call_waiting_enabled_yes = 1
-		if call_waiting_enabled_yes == 0:
-#			upd_cwdb='/usr/sbin/rasterisk -x "database put CW '+new_line_enable_cw[1]+' DISABLED'
-			upd_cwdb='/usr/sbin/rasterisk -x "database del CW '+new_line_enable_cw[1]
-			subprocess.call(upd_cwdb+'"', shell=True)
+			if row[0] == no_call_waiting:
+				call_waiting_no_yes = 1
+		if call_waiting_no_yes == 0:
+#			upd_busy_dest_sql="""UPDATE users,devices SET users.name='%(name)s',devices.description='%(name)s' WHERE users.extension=devices.id AND users.extension='%(num)s'"""%{"name":row[2],"num":row[0]}
+			upd_busy_dest_sql="""UPDATE users SET users.busy_dest='%(b_dest)s' WHERE users.extension='%(num)s'"""%{"b_dest":'my-call-hold,s,1',"num":row[0]}
+			cursor.execute(upd_busy_dest_sql)
+			db.commit()
 			restart=1
-			file_log_cw=open(str(dir_conf)+'log/busy_dest.log', 'a')
-			file_log_cw.write(str(date_time+"\t"+'Для номера '+new_line_enable_cw[1]+' в Расширенных настройках выключили Call Waiting (DISABLED)'+"\n"))
-			file_log_cw.close()
-busy_dest_sql="SELECT extension FROM users WHERE `busy_dest` = ''"
-cursor.execute(busy_dest_sql)
-for row in cursor:
-	call_waiting_no_yes = 0
-	for no_call_waiting in call_waiting_i:
-		if row[0] == no_call_waiting:
-			call_waiting_no_yes = 1
-	if call_waiting_no_yes == 0:
-#		upd_busy_dest_sql="""UPDATE users,devices SET users.name='%(name)s',devices.description='%(name)s' WHERE users.extension=devices.id AND users.extension='%(num)s'"""%{"name":row[2],"num":row[0]}
-		upd_busy_dest_sql="""UPDATE users SET users.busy_dest='%(b_dest)s' WHERE users.extension='%(num)s'"""%{"b_dest":'my-call-hold,s,1',"num":row[0]}
-		cursor.execute(upd_busy_dest_sql)
-		db.commit()
-		restart=1
-		file_log_busy_dest=open(str(dir_conf)+'log/busy_dest.log', 'a')
-		file_log_busy_dest.write(str(date_time+"\t"+'Для номера '+row[0]+' в Расширенных настройках включили при BUSY дополнительное назначение my-call-hold'+"\n"))
-		file_log_busy_dest.close()
-db.commit()
+			file_log_busy_dest=open(str(dir_conf)+'log/busy_dest.log', 'a')
+			file_log_busy_dest.write(str(date_time+"\t"+'Для номера '+row[0]+' в Расширенных настройках включили при BUSY дополнительное назначение my-call-hold'+"\n"))
+			file_log_busy_dest.close()
+	db.commit()
+#Call Waiting END
+
 #FW
 #
 if fw_auto == "1":
