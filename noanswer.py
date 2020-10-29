@@ -49,7 +49,7 @@ db = MySQLdb.connect(host="localhost", user="root", passwd="", db="asterisk", ch
 cursor = db.cursor()
 restart=0
 
-#Если = 1, то на номерах которые создаются на FreePBX и не прописаны в файле freepbx.pass в переменной call_waiting_invisible= включется фишка: "Оставайтесь на линии абонент занят" (предварительно необходимо еще дополнительное назначение
+#Если = 1, то на номерах которые создаются на FreePBX и не прописаны в файле freepbx.pass в переменной call_waiting_invisible= включется фишка: "Оставайтесь на линии абонент занят" (предварительно необходимо еще дополнительное назначение my-call-hold)
 if call_waiting_yes == '1':
 #Call Waiting
 	check_cw=subprocess.check_output('/usr/sbin/rasterisk -x "database show CW"',shell=True,universal_newlines=True)
