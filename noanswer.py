@@ -9,12 +9,26 @@ import MySQLdb
 import subprocess
 from datetime import datetime
 date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
-dir_conf = '/opt/asterisk/script/';
-fixedcid_def = '';
-fw_auto = 0;
-aggregate_mwi = 0;
-call_waiting_yes = 0;
+dir_conf = '/opt/asterisk/script/'
+fixedcid_def = ''
+fw_auto = 0
+aggregate_mwi = 0
+call_waiting_yes = 0
+secret = 0
+secret_cisco_model_i = []
+model = ''
 call_waiting_i = []
+force_rport_yes = 0
+force_rport_model_i = []
+
+def sql_update(keyword, data, number, model):
+	file_log=open(str(dir_conf)+'log/cisco_update.log', 'a')
+	file_log.write(str(date_time + "\t" + 'У номера' + "\t" + number + "\t" + 'был переключен параметр' + "\t" + keyword + "\t" + 'в' + "\t" + data + "\t" + 'так как модель телефона в AD' + "\t" + model +"\n"))
+	file_log.close()
+	upd_data_sql="""UPDATE sip SET data='%(new_data)s' WHERE keyword = '%(keyword)s' AND id='%(num)s'"""%{"new_data":data,"keyword":keyword,"num":number}
+	cursor.execute(upd_data_sql)
+	db.commit()
+
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	result_line=re.match(r'fixedcid = \d+', line)
@@ -29,6 +43,32 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	if result_line is not None:
 		param_call_waiting_yes=line.split(' = ')
 		call_waiting_yes=param_call_waiting_yes[1]
+	result_line=re.match(r'secret = \d', line)
+	if result_line is not None:
+		param_secret=line.split(' = ')
+		secret=param_secret[1]
+	result_line=re.match(r'secret_cisco = ', line)
+	if result_line is not None:
+		secret_cisco = line.split(' = ')
+		secret_cisco_model = secret_cisco[1]
+		result_line=re.search(',', secret_cisco_model)
+		if result_line is not None:
+			secret_cisco_model_i=secret_cisco_model.split(',')
+		else:
+			secret_cisco_model_i.append(secret_cisco_model)
+	result_line=re.match(r'force_rport_yes = \d', line)
+	if result_line is not None:
+		param_force_rport_yes=line.split(' = ')
+		force_rport_yes=param_force_rport_yes[1]
+	result_line=re.match(r'force_rport_model = ', line)
+	if result_line is not None:
+		force_rport_model = line.split(' = ')
+		force_rport_model_model = force_rport_model[1]
+		result_line=re.search(',', force_rport_model_model)
+		if result_line is not None:
+			force_rport_model_i=force_rport_model_model.split(',')
+		else:
+			force_rport_model_i.append(force_rport_model_model)
 	result_line=re.match(r'call_waiting_invisible = \d+', line)
 	if result_line is not None:
 		param_call_waiting_invisible=line.split(' = ')
@@ -193,7 +233,7 @@ if fw_auto == "1":
 				restart=1
 		else:
 			print('У номера '+row[0]+' ошибка в строке '+row[1]);
-#Off fw
+# Off fw
 #
 	sql="SELECT userman_users.default_extension,userman_users.cell,findmefollow.grpnum from userman_users,findmefollow WHERE `cell` ='' AND `default_extension` !='none' AND userman_users.default_extension=findmefollow.grpnum"
 	cursor.execute(sql)
@@ -214,6 +254,61 @@ if fw_auto == "1":
 		subprocess.call(upd_indb1, shell=True)
 		subprocess.call(upd_indb2, shell=True)
 		subprocess.call(upd_indb3, shell=True)
+#FW end
+
+#Меняем пароль для sip-учетки номера (например cisco 7911 не переваривает пароль длинее 31, а во FreePBX длина по умолчанию 32)
+#Update password sip
+if secret == '1':
+	for model in secret_cisco_model_i:
+		model_sql="""SELECT sip.id, sip.data FROM userman_users, sip WHERE userman_users.home = '%(cisco)s' AND keyword = 'secret' AND userman_users.default_extension = sip.id AND CHAR_LENGTH(sip.data) > '30'"""%{"cisco":model}
+		cursor.execute(model_sql)
+		for row in cursor:
+			if row[0] != '':
+				restart=1
+				new_pass = row[1][0:30]
+				file_log=open(str(dir_conf)+'log/new_pass.log', 'a')
+				file_log.write(str(date_time + "\t" + 'У номера ' + "\t" + row[0] + 'изменили пароль с' + "\t" + row[1] + "\t" + 'на' + "\t" + new_pass + "\t" + 'так как модель телефона в AD' + "\t" + model +"\n"))
+				file_log.close()
+				upd_pass_sql="""UPDATE sip SET data='%(new_pass)s' WHERE keyword = 'secret' AND id='%(num)s'"""%{"new_pass":new_pass,"num":row[0]}
+				cursor.execute(upd_pass_sql)
+		db.commit()
+
+#Update password sip end#
+
+#force_rport_yes = 0
+#force_rport_model_i = []
+#Включаем rewrite_contact и force_rport
+if force_rport_yes == '1':
+	force_rport_sql="SELECT default_extension, home FROM userman_users"
+	cursor.execute(force_rport_sql)
+	for row in cursor:
+		check = 0
+		for upd_force_rport in force_rport_model_i:
+			if row[1] == upd_force_rport:
+				check = 1
+		rewrite_contact_sql = """SELECT id, data FROM sip WHERE keyword = 'rewrite_contact' AND id = '%(num)s'"""%{"num":row[0]}
+		cursor.execute(rewrite_contact_sql)
+		for no_yes in cursor:
+			if str(no_yes[1]) == 'no':
+				if check != 1:
+					sql_update('rewrite_contact', 'yes', str(row[0]), str(row[1]))
+					restart=1
+			elif str(no_yes[1]) == 'yes':
+				if check == 1:
+					sql_update('rewrite_contact', 'no', str(row[0]), str(row[1]))
+					restart=1
+		force_rport_yes_no_sql = """SELECT id, data FROM sip WHERE keyword = 'force_rport' AND id = '%(num)s'"""%{"num":row[0]}
+		cursor.execute(force_rport_yes_no_sql)
+		for no_yes in cursor:
+			if str(no_yes[1]) == 'no':
+				if check != 1:
+					sql_update('force_rport', 'yes', str(row[0]), str(row[1]))
+					restart=1
+			elif str(no_yes[1]) == 'yes':
+				if check == 1:
+					sql_update('force_rport', 'no', str(row[0]), str(row[1]))
+					restart=1
+	db.commit()
 
 #Update names
 #
