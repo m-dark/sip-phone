@@ -153,7 +153,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 										if (exists($hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]})){
 ##											print("$array_number_cfg[1]\n");
 										}else{
-											if(($array_number_cfg_mac[0] != 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] != 'network.vlan.internet_port_vid')){
+											if(($array_number_cfg_mac[0] ne 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] ne 'network.vlan.internet_port_vid')){
 												$hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
 												print($array_number_cfg[1]);
 											}
