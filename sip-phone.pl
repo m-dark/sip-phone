@@ -202,6 +202,7 @@ my %hash_model_conf = (
 #			't19' 		=> 'y000000000031.cfg',
 			't19_e2' 	=> 'y000000000053.cfg',
 			't20'		=> 'y000000000007.cfg',
+			't20p'		=> 'y000000000007.cfg',
 			't21'		=> 'y000000000034.cfg',
 			't21p_e2'	=> 'y000000000052.cfg',
 			't21pe2'	=> 'y000000000052.cfg',
@@ -425,7 +426,7 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 #					print "Тест на скрытый номер: $$ref[2]\t $$ref[3]\n";
 				}
 			}else{
-				$hash_mac_model{"\L$$ref[2]"} = "$$ref[3]";
+				$hash_mac_model{"\L$$ref[2]"} = lc("$$ref[3]");
 			}
 			$hash_sip_phone{"\L$$ref[2]"}{"$$ref[0]"} = "$$ref[1]";
 			$hash_named_db{"$$ref[0]"}{namedcallgroup} = "$$ref[4]";
