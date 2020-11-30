@@ -19,13 +19,41 @@ use File::Copy;
 
 my $dir = '/opt/asterisk/script';								#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
 my $host = '';		#"localhost"; # MySQL-сервер нашего хостинга
-my $port = '';		#"3306"; # порт, на который открываем соединение
+my $port = '3306';	#"3306"; # порт, на который открываем соединение
 my $user = '';		#"freepbxuser"; # имя пользователя
 my $pass = '';		#пароль /etc/freepbx.conf
 my $db = '';		#"asterisk"; # имя базы данных.
 #my @invisible = (121,152,521,523,524);
 my @invisible = '';
 my $invisible_yes = 0;
+
+open (my $freepbx_conf, '<:encoding(UTF-8)', "/etc/freepbx.conf") || die "Error opening file: freepbx.conf $!";
+        while (defined(my $line_freepbx_conf = <$freepbx_conf>)){
+                chomp ($line_freepbx_conf);
+                if ($line_freepbx_conf =~ /^\#/){
+                        next;
+                }
+                $line_freepbx_conf =~ s/\$amp_conf\[\"//;
+                $line_freepbx_conf =~ s/\"\]//;
+                $line_freepbx_conf =~ s/\"//;
+                $line_freepbx_conf =~ s/\"\;//;
+                my @array_freepbx_conf = split (/ = /,$line_freepbx_conf,-1);
+                given($array_freepbx_conf[0]){
+                        when('AMPDBHOST'){
+                                $host = $array_freepbx_conf[1];
+                        }when('AMPDBUSER'){
+                                $user = $array_freepbx_conf[1];
+                        }when('AMPDBPASS'){
+                                $pass = $array_freepbx_conf[1];
+                        }when('AMPDBNAME'){
+                                $db = $array_freepbx_conf[1];
+                        }default{
+                                next;
+                        }
+                }
+        }
+close($freepbx_conf);
+
 open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error opening file: freepbx.pass $!";
         while (defined(my $line_freepbx_pass = <$freepbx_pass>)){
                 chomp ($line_freepbx_pass);
@@ -34,17 +62,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir/freepbx.pass") || die "Error 
                 }
                 my @array_freepbx_pass = split (/ = /,$line_freepbx_pass,-1);
                 given($array_freepbx_pass[0]){
-                        when('host'){
-                                $host = $array_freepbx_pass[1];
-                        }when('port'){
-                                $port = $array_freepbx_pass[1];
-                        }when('user'){
-                                $user = $array_freepbx_pass[1];
-                        }when('pass'){
-                                $pass = $array_freepbx_pass[1];
-                        }when('db'){
-                                $db = $array_freepbx_pass[1];
-                        }when('invisible'){
+                        when('invisible'){
 				$array_freepbx_pass[1] =~ s/ //;
 				@invisible = split (/,/,$array_freepbx_pass[1]);
                         }default{
@@ -94,15 +112,17 @@ while (my $ref = $sth->fetchrow_arrayref){
 }
 open (my $file_phonebook_cfg, '<:encoding(UTF-8)', "$dir/phonebook.cfg") || die "Error opening file: phonebook.cfg $!";
         while (defined(my $line_phonebook_cfg = <$file_phonebook_cfg>)){
-		if($line_phonebook_cfg !~ /^#/){
-			chomp ($line_phonebook_cfg);
-			my @array_phonebook_cfg = split (/\t/,$line_phonebook_cfg,-1);
-			print $file "  \<DirectoryEntry\>
+		if($line_phonebook_cfg =~ /^#/){
+			next;
+		}
+		chomp ($line_phonebook_cfg);
+		my @array_phonebook_cfg = split (/\t/,$line_phonebook_cfg,-1);
+		print $file "  \<DirectoryEntry\>
     \<Name\>$array_phonebook_cfg[0]\<\/Name\>
     \<Telephone\>$array_phonebook_cfg[1]\<\/Telephone\>
   \<\/DirectoryEntry\>\n";
 
-			print $file_grandstream "  \<Contact\>
+		print $file_grandstream "  \<Contact\>
     \<FirstName\>\<\/FirstName\>
     \<LastName\>$array_phonebook_cfg[0]\<\/LastName\>
         \<Phone\>
@@ -114,9 +134,6 @@ open (my $file_phonebook_cfg, '<:encoding(UTF-8)', "$dir/phonebook.cfg") || die 
             \<groupid\>2\<\/groupid\>
         \<\/Groups\>
   \<\/Contact\>\n";
-		}else{
-			next;
-		}
         }
 close ($file_phonebook_cfg);
 
@@ -127,6 +144,6 @@ close ($file_grandstream);
 my $rc = $sth->finish;
 $rc = $dbasterisk->disconnect;  # закрываем соединение
 
-`cp $dir/phonebook_yealink.xml /var/www/html/phonebook_yealink.xml`
-#`cp $dir/phonebook_grandstream.xml /var/www/html/phonebook_grandstream.xml`
-#`chmod 644 /var/www/html/phonebook.xml`
+`cp $dir/phonebook_yealink.xml /var/www/html/phonebook_yealink.xml`;
+`cp $dir/phonebook_grandstream.xml /var/www/html/phonebook_grandstream.xml`;
+#`chmod 644 /var/www/html/phonebook.xml`;
