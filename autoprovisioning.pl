@@ -707,21 +707,22 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 								print $file_cfg_local "$mas_line_cfg_local_old[0] = 0\n";
 							}elsif(($mas_line_cfg_local_old[0] =~ /^account.\d{1,2}.always_fwd.target$/) && ($fwd_enable == 0)){
 								print $file_cfg_local "$mas_line_cfg_local_old[0] = \%EMPTY\%\n";
-							}elsif(($mas_line_cfg_local_old[0] =~ /^linekey.\d{1,2}./) && ($rename_linekey == 1)){
-								$linekey_start = 1;
-								my @number_linekey = split (/\./,$mas_line_cfg_local_old[0],-1);
-								$hash_linekey{$number_line}{"${number_linekey[0]}.${number_linekey[1]}"}{${number_linekey[2]}} = $mas_line_cfg_local_old[1];
-								$number_line++;
 							}elsif(($mas_line_cfg_local_old[0] =~ /^memorykey.\d{1,2}./) && ($rename_memorykey == 1)){
 								$memorykey_start = 1;
 								my @number_memorykey = split (/\./,$mas_line_cfg_local_old[0],-1);
 								$hash_memorykey{$number_memory}{"${number_memorykey[0]}.${number_memorykey[1]}"}{${number_memorykey[2]}} = $mas_line_cfg_local_old[1];
 								$number_memory++;
+							}elsif(($mas_line_cfg_local_old[0] =~ /^linekey.\d{1,2}./) && ($rename_linekey == 1)){
+								$linekey_start = 1;
+								my @number_linekey = split (/\./,$mas_line_cfg_local_old[0],-1);
+								$hash_linekey{$number_line}{"${number_linekey[0]}.${number_linekey[1]}"}{${number_linekey[2]}} = $mas_line_cfg_local_old[1];
+								$number_line++;
 							}else{
 								if ($memorykey_start == 1){
 									&print_array_memorykey($file_cfg_local,\%hash_memorykey);
 									$memorykey_start = 0;
-								}elsif ($linekey_start == 1){
+								}
+								if ($linekey_start == 1){
 									&print_array_linekey($file_cfg_local,\%hash_linekey);
 									$linekey_start = 0;
 								}
