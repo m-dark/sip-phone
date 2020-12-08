@@ -693,14 +693,14 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 									$hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
 								}
 							}elsif($mas_line_cfg_local_old[0] eq 'static.network.vpn_enable'){
-								if ($linekey_start == 1){
-									print "!!!!!$file_cfg_local!!!!!!\n";
-									&print_array_linekey($file_cfg_local,\%hash_linekey);
-									$linekey_start = 0;
-								}elsif ($memorykey_start == 1){
+								if ($memorykey_start == 1){
 									print "!!!!!$file_cfg_local!!!!!!\n";
 									&print_array_memorykey($file_cfg_local,\%hash_memorykey);
 									$memorykey_start = 0;
+								}elsif ($linekey_start == 1){
+									print "!!!!!$file_cfg_local!!!!!!\n";
+									&print_array_linekey($file_cfg_local,\%hash_linekey);
+									$linekey_start = 0;
 								}
 								next;
 							}elsif(($mas_line_cfg_local_old[0] =~ /^account.\d{1,2}.always_fwd.enable$/) && ($fwd_enable == 0)){
@@ -718,12 +718,12 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 								$hash_memorykey{$number_memory}{"${number_memorykey[0]}.${number_memorykey[1]}"}{${number_memorykey[2]}} = $mas_line_cfg_local_old[1];
 								$number_memory++;
 							}else{
-								if ($linekey_start == 1){
-									&print_array_linekey($file_cfg_local,\%hash_linekey);
-									$linekey_start = 0;
-								}elsif ($memorykey_start == 1){
+								if ($memorykey_start == 1){
 									&print_array_memorykey($file_cfg_local,\%hash_memorykey);
 									$memorykey_start = 0;
+								}elsif ($linekey_start == 1){
+									&print_array_linekey($file_cfg_local,\%hash_linekey);
+									$linekey_start = 0;
 								}
 								print $file_cfg_local "$line_cfg_local_old\n";
 								$hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
@@ -751,12 +751,12 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 							$hash_local_cfg_print{$key_number_line_mac}{$key_date} = 0;
 						}
 					}
-					if ($linekey_start == 1){
-						&print_array_linekey($file_cfg_local,\%hash_linekey);
-						$linekey_start = 0;
-					}elsif ($memorykey_start == 1){
+					if ($memorykey_start == 1){
 						&print_array_memorykey($file_cfg_local,\%hash_memorykey);
 						$memorykey_start = 0;
+					}elsif ($linekey_start == 1){
+						&print_array_linekey($file_cfg_local,\%hash_linekey);
+						$linekey_start = 0;
 					}
 				close ($file_cfg_local_old);
 			}
