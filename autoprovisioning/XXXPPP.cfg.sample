@@ -1,0 +1,24 @@
+account.0.enable = 1
+account.0.label = 
+account.0.display_name = 
+account.0.auth_name = 
+account.0.user_name = 
+account.0.password = 
+
+account.0.sip_server.1.address = 10.0.18.2
+account.0.sip_server.1.port = 5060
+account.0.sip_server.1.expires = 180
+account.0.sip_server.1.register_on_enable = 1
+account.0.unregister_on_reboot = 1
+
+account.0.codec.g722.enable = 1
+account.0.codec.g722.priority = 2
+account.0.codec.g729.enable = 1
+account.0.codec.g729.priority = 3
+account.0.codec.pcma.enable =  1
+account.0.codec.pcma.priority = 1
+account.0.codec.pcmu.enable = 0
+
+account.0.dtmf.type = 1
+account.0.outbound_proxy_enable = 0
+

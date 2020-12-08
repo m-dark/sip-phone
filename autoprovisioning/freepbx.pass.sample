@@ -1,0 +1,73 @@
+#Параметры для подключения к MYSQL
+host = localhost
+port = 3306
+user = freepbxuser
+# пароль можно посмотреть в /etc/freepbx.conf
+pass = pAsfF0dsW/1m1221
+db = asterisk
+
+# Данные для скрипта mixmon_mp3.pl
+cdrdb = asteriskcdrdb
+cdrtable = cdr
+
+# Данные для скрипта sip-phone.pl
+# Адрес TFTP-сервера
+tftp_ip = tftp://10.0.18.2/
+sip_server_1_address = 10.0.18.2
+sip_server_1_port = 5060
+sip_server_2_address = 10.0.18.2
+sip_server_2_port = 5060
+
+# Значение по умолчанию для всех телефонов по вкл./выкл. VPN
+vpn_root = 0
+#local_cfg - Здесь прописываем индивидуальные настройки для каждого отдельного номера в конфигурацию *-local.cfg (например подписываем DECT трубку на номере 555(555:handset.1.name = Приёмная;), 
+#номера можно перечислить диапазоном 310-330.)
+#local_cfg = 100-999:lang.gui = Russian; 100-999:lang.wui = Russian; 100-999:features.action_uri_limit_ip = 10.1.100.2
+#local_cfg = 235:account.1.sip_server_host = 10.0.18.2; 235:account.1.sip_server_port = 5060
+
+#Настройка для всех файлов mac.cfg
+#network.vlan.internet_port_enable = 1
+#network.vlan.internet_port_vid = 111
+#mac_cfg = 404:network.vlan.internet_port_enable = 0; 404:network.vlan.internet_port_vid = 1
+
+# Данные для скриптов pdf_to_tiff.pl & phonebook.pl & result_email.pl
+domen = tel.ru
+user_name = test
+user_email = test@test.ru
+user_email_phonebook = test@test.ru
+
+# Данные для скрипта noanswer.py
+# Номер телефона по умолчанию, для внутренних телефонов при включенном FollowME
+fixedcid = 3573097
+fw_auto = 1
+#call_waiting_yes = 0/1
+call_waiting_yes = 0
+#Если password от sip-учетки длинее чем 31 символ, то конфиг на cisco IP Phone не принимается телефоном, а во FreePBX пароль по умолчаниюсоздается в 32 разряда
+#Для решения проблемы, было принято решение отслеживать из поля в AD модель телефона и если она попадает в список переменной secret_cisco, то на sip-учетке
+#FeePBXа урезаем пароль до 30 разрядов.
+secret = 1
+secret_cisco = 7911g,7942g,7945g
+
+#Телефоны cisco не хотят работать с freePBX по UDP (проверял на pjsip) с настройками по умолчанию.
+#Для корректной работы cisco телефонов необходимо выключить в no два параметра force_rport и rewrite_contact
+#Данный парметр делает это автоматически если force_rport_yes = 1 (0 не делает) и force_rport_model = 7911g,7942g,7945g (перечисляем модели длякоторых необходимо выставлять параметры в no)
+force_rport_yes = 1
+force_rport_model = 7911g,7942g,7945g
+
+#Здесь необходимо добавить внутренние номера которые входят в группы, для того, чтобы при занятой линии тот кто звонит не слушал сообщение о том, что абонент занят, перезвоните позднее.
+#call_waiting_invisible = 104,105
+aggregate_mwi = 1
+
+# Данные для скрипта phonebook_xml.pl
+invisible = 666
+
+# Данные для скрипта calls_in_out_all.py
+Для каждого номера прописываем колличество линий, для корректного формирования статичтики
+dict_number = 2479241:5,3573079:4,3573097:14,3856610:8,3857018:2,3857320:3,3857500:3,3857710:3,3857750:4,3857787:3,3857900:6,3857901:3,3858068:4,3858088:5,3859101:3,3573011:4,3858758:5
+# Прописываем e-mail на который будет отправляться статистика.
+#email_report = kruk.ivan@itmh.ru
+#email_report = 
+
+# Данные для скрипта cdr_report.py
+# В разработке
+cdr_report = 1:666:311,312-314,all:1d:1d
