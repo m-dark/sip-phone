@@ -589,9 +589,9 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				$hash_template_yealink{$key_number_line_mac}{$number_line}{'network.vlan.internet_port_vid'} = $internet_port_vid;
 			}
 			$number_line++;
-			foreach my $key_numline (sort { $a <=> $b}  keys %{$hash_template_yealink{$key_number_line_mac}}){
+			foreach my $key_numline (sort {$a <=> $b}  keys %{$hash_template_yealink{$key_number_line_mac}}){
 				foreach my $key_line (sort keys %{$hash_template_yealink{$key_number_line_mac}{$key_numline}}){
-					if (exists($hash_cfg_mac{$hash_template_yealink{$key_number_line_mac}{$key_numline}})){
+					if (exists($hash_cfg_mac{$key_number_line_mac}{$key_line})){
 						print $file_cfg "$key_line".' = '."$hash_cfg_mac{$key_number_line_mac}{$key_line}\n";
 					}else{
 						if($key_line eq 'probel'){
