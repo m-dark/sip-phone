@@ -63,7 +63,7 @@ my %hash_mac_model = ();									#Хэш mac-адресов с версией м
 my %hash_mac_phone_pass = ();									#Хэш содержит mac-адреса sip-телефонов с номерами телефонов и паролями от sip-учеток этих номеров.
 my %hash_displayname = ();									#Хэш который содержит в себе displayname из файла freepbx.pass, которые необходимо заменить для справочника.
 my %hash_dir_files = ();									#Хэш содержит список файлов конфигураций для всех sip-телефонов из каталога TFTP-server (для удаления sip-учетки на sip-телефонах, которые удалили из AD)
-my %hash_template_yealink = ();									#Хэш содержит конфигурацию шаблона из файла XXXPPP.cfg {"mac yealinka"}{"номер строки"}{"Знпачение до равно"} = "Значение после ="
+my %hash_template_yealink = ();									#Хэш содержит конфигурацию шаблона из файла XXXPPP.cfg {"mac yealinka"}{"номер строки"}{"Значение до равно"} = "Значение после ="
 
 open (my $file_conf_number_line, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
 	while (defined(my $line_number_line = <$file_conf_number_line>)){
@@ -217,18 +217,20 @@ open (my $file_brand_model, '<:encoding(UTF-8)', "$dir_conf/brand_model.cfg") ||
 			$hash_brand_model_conf{$brand}{$line_file_brand_model}{'name_cfg'} = "${line_file_brand_model}.cfg";
 			open (my $name_cfg, '<:encoding(UTF-8)', "$dir_devices/$brand/$line_file_brand_model/${line_file_brand_model}.cfg") || die "Error opening file: $dir_devices/$brand/$line_file_brand_model/${line_file_brand_model}.cfg $!";
 				while (defined(my $line_name_cfg = <$name_cfg>)){
-            				if ($line_name_cfg =~ /^\#|^\;/){
-                    				next;
+					if ($line_name_cfg =~ /^\#|^\;/){
+						next;
 			                }
 			                chomp ($line_name_cfg);
 			                my @array_name_cfg = split (/ = /,$line_name_cfg,-1);
 			                given($array_name_cfg[0]){
-		                    		when('mac_boot'){
-		                            		$hash_brand_model_conf{$brand}{$line_file_brand_model}{'mac_boot'} = $array_name_cfg[1];
-                		    		}default{
-                		    			next;
-                		    		}
-                		    	}
+						when('mac_boot'){
+							$hash_brand_model_conf{$brand}{$line_file_brand_model}{'mac_boot'} = $array_name_cfg[1];
+						}when('ver_rom'){
+							$hash_brand_model_conf{$brand}{$line_file_brand_model}{'ver_rom'} = $array_name_cfg[1];
+                				}default{
+                					next;
+                				}
+                			}
                 		}
                 	close($name_cfg);
                 }
@@ -537,9 +539,13 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 		open (my $file_cfg, '>:encoding(utf-8)', "$tmp_dir/${date_time_file}_${key_number_line_mac}.cfg") || die "Error opening file: ${date_time_file}_${key_number_line_mac}.cfg $!";
 			print $file_cfg "#!version:1.0.0.1\n";
 			my $number_line = 0;
+			my $file_template_cfg = 'XX';
+			if(exists($hash_brand_model_conf{"$brand_yealink"}{$hash_mac_model{$key_number_line_mac}}{'ver_rom'})){
+				$file_template_cfg = $hash_brand_model_conf{"$brand_yealink"}{$hash_mac_model{$key_number_line_mac}}{'ver_rom'};
+			}
 			foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
-				open (my $file_xxx_ppp, '<:encoding(UTF-8)', "$dir_conf/XXXPPP.cfg") || die "Error opening file: XXXPPP.cfg $!";
-					while (defined(my $line_cfg = <$file_xxx_ppp>)){
+				open (my $file_xx, '<:encoding(UTF-8)', "$dir_conf/$file_template_cfg.cfg") || die "Error opening file: $file_template_cfg.cfg $!";
+					while (defined(my $line_cfg = <$file_xx>)){
 						if ($line_cfg =~ /^(\#|\;)/){
 							next;
 						}
@@ -564,7 +570,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 						}
 						$number_line++;
 					}
-				close ($file_xxx_ppp);
+				close ($file_xx);
 			}
 			if (exists($hash_vpn_user_enable{$key_number_line_mac})){
 				$hash_template_yealink{$key_number_line_mac}{$number_line}{'network.vpn_enable'} = 1;

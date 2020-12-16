@@ -20,6 +20,9 @@ sip_server_2_port = 5060
 
 # Значение по умолчанию для всех телефонов по вкл./выкл. VPN
 vpn_root = 0
+fwd_enable = 1
+rename_linekey = 1
+rename_memorykey = 1
 #local_cfg - Здесь прописываем индивидуальные настройки для каждого отдельного номера в конфигурацию *-local.cfg (например подписываем DECT трубку на номере 555(555:handset.1.name = Приёмная;), 
 #номера можно перечислить диапазоном 310-330.)
 #local_cfg = 100-999:lang.gui = Russian; 100-999:lang.wui = Russian; 100-999:features.action_uri_limit_ip = 10.1.100.2
