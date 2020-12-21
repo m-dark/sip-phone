@@ -431,7 +431,7 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 			}
 			if (exists($hash_mac_model{"\L$mac_adr"})){
 				if (($hash_mac_model{"\L$mac_adr"} ne "$$ref[3]") && ("$$ref[3]" ne '')){
-					print "ERROR_2: За mac-адресом \L$mac_adr уже прописана модель $hash_mac_model{\"\L$mac_adr\"}, а вы пытаетесь прописать за ним новую модель $$ref[3]\n";
+					print "ERROR_2: За mac-адресом \L$mac_adr уже прописана модель $hash_mac_model{\"\L$mac_adr\"}, а вы пытаетесь прописать за ним новую модель $$ref[3], на учетке с номером $$ref[0]\n";
 					next;
 				}else{
 #					print "Тест на скрытый номер: $$ref[2]\t $$ref[3]\n";
