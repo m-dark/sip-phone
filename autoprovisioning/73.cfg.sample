@@ -10,6 +10,7 @@ account.0.sip_server.1.port = 5060
 account.0.sip_server.1.expires = 180
 account.0.sip_server.1.register_on_enable = 1
 account.0.unregister_on_reboot = 1
+account.0.subscribe_register = 1
 
 account.0.codec.2.enable = 1
 account.0.codec.2.payload_type = PCMA
