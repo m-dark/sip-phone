@@ -378,6 +378,18 @@ if aggregate_mwi == "1":
 			cursor.execute(upd_sql)
 			db.commit()
 			restart=1
+elif aggregate_mwi == "2":
+	sql="SELECT id FROM sip WHERE keyword = 'aggregate_mwi' and data = 'yes'"
+	cursor.execute(sql)
+	for row in cursor:
+		if row[0]!='':
+			file_log=open(str(dir_conf)+'log/aggregate_mwi.log', 'a')
+			file_log.write(str(date_time + "\t" + ' На номере ' + "\t" + row[0] + ' Вылючили \"Агрегированные MWI\"' + "\n"))
+			file_log.close()
+			upd_sql="""UPDATE sip SET data='no' WHERE id='%(num)s' AND keyword='aggregate_mwi'"""%{"num":row[0]}
+			cursor.execute(upd_sql)
+			db.commit()
+			restart=1
 
 #Reload check
 sql="SELECT `value` FROM admin WHERE `variable`='need_reload'"
