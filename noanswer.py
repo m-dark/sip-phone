@@ -267,7 +267,7 @@ if secret == '1':
 				restart=1
 				new_pass = row[1][0:30]
 				file_log=open(str(dir_conf)+'log/new_pass.log', 'a')
-				file_log.write(str(date_time + "\t" + 'У номера ' + "\t" + row[0] + 'изменили пароль с' + "\t" + row[1] + "\t" + 'на' + "\t" + new_pass + "\t" + 'так как модель телефона в AD' + "\t" + model +"\n"))
+				file_log.write(str(date_time + "\t" + 'У номера ' + row[0] + ' изменили пароль с' + "\t" + row[1] + "\t" + 'на' + "\t" + new_pass + "\t" + 'так как модель телефона в AD' + "\t" + model +"\n"))
 				file_log.close()
 				upd_pass_sql="""UPDATE sip SET data='%(new_pass)s' WHERE keyword = 'secret' AND id='%(num)s'"""%{"new_pass":new_pass,"num":row[0]}
 				cursor.execute(upd_pass_sql)
