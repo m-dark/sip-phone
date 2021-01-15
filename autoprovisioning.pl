@@ -679,8 +679,6 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				my $linekey_start = 0;
 				my $memorykey_start = 0;
 				my $expansion_module_start = 0;
-				my $lang_gui = 0;
-				my $lang_wui = 0;
 				my $number_line = 1;
 				my $number_memory = 1;
 				my $number_expansion_module = 1;
@@ -694,6 +692,18 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 						if($line_cfg_local_old =~ /^$/){
 							print $file_cfg_local "$line_cfg_local_old\n";
 						}elsif ((exists($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old})) && ($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} == 1)){
+							if ($expansion_module_start == 1){
+								&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+								$expansion_module_start = 0;
+							}
+							if ($memorykey_start == 1){
+								&print_array_memorykey($file_cfg_local,\%hash_memorykey);
+								$memorykey_start = 0;
+							}
+							if ($linekey_start == 1){
+								&print_array_linekey($file_cfg_local,\%hash_linekey);
+								$linekey_start = 0;
+							}
 							print $file_cfg_local "$line_cfg_local_old\n";
 							$hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
 ##							print("$key_number_line_mac $line_cfg_local_old $hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old}\n");
