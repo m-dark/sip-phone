@@ -398,6 +398,11 @@ $sth->execute; # исполняем запрос
 #open ($file, '>>:encoding(UTF-8)', "$dir_conf/ad_sip-phone.txt") || die "Error opening file: ad_sip-phone.txt $!";
 open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.txt") || die "Error opening file: ${date_time_file}_ad_sip-phone.txt $!";
 	while (my $ref = $sth->fetchrow_arrayref) {
+		if (defined ($$ref[2])){
+			$$ref[2] =~ s/\.//g;
+			$$ref[2] =~ s/\://g;
+			$$ref[2] =~ s/-//g;
+		}
 		if((defined ($$ref[3])) && ($$ref[3] =~ /\./)){
 			my @array_ref_3 = split (/\./,$$ref[3],-1);
 			$$ref[3] = $array_ref_3[0];
