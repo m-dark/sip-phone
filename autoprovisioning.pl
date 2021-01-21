@@ -410,10 +410,10 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 	while (my $ref = $sth->fetchrow_arrayref){
 		my $mac_adr = $$ref[2];
 		if (defined $$ref[2]){
-			$mac_adr =~ s/\://;
-			$mac_adr =~ s/ //;
-			$mac_adr =~ s/\.//;
-			$mac_adr =~ s/-//;
+			$mac_adr =~ s/\://g;
+			$mac_adr =~ s/ //g;
+			$mac_adr =~ s/\.//g;
+			$mac_adr =~ s/-//g;
 			if(length($mac_adr) != 12){
 				print "Error 112: В mac-адресе: $mac_adr номера: $$ref[0] не 12 символов!\n";
 			}
