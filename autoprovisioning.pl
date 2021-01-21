@@ -65,6 +65,7 @@ my %hash_mac_phone_pass = ();									#Хэш содержит mac-адреса 
 my %hash_displayname = ();									#Хэш который содержит в себе displayname из файла freepbx.pass, которые необходимо заменить для справочника.
 my %hash_dir_files = ();									#Хэш содержит список файлов конфигураций для всех sip-телефонов из каталога TFTP-server (для удаления sip-учетки на sip-телефонах, которые удалили из AD)
 my %hash_template_yealink = ();									#Хэш содержит конфигурацию шаблона из файла XXXPPP.cfg {"mac yealinka"}{"номер строки"}{"Значение до равно"} = "Значение после ="
+my %hash_template_qtech = ();
 
 open (my $file_conf_number_line, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
 	while (defined(my $line_number_line = <$file_conf_number_line>)){
@@ -241,12 +242,25 @@ open (my $file_brand_model, '<:encoding(UTF-8)', "$dir_conf/brand_model.cfg") ||
 close ($file_brand_model);
 
 #Считываем названия файлов конфигурации из каталога TFTP-server
-#Yealink
+#Yealink and qtech
 chdir "$dir_tftp" or die "No open $dir_tftp $!";
 my @dir_files = glob "[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z].cfg";
 foreach my $file_old (@dir_files){
-	$file_old =~ s/.cfg//;
-	$hash_dir_files{'yealink'}{$file_old} = 1;
+	open(my $file_cfg, '<:encoding(UTF-8)', "$dir_tftp/$file_old") || die "Error opening file: $dir_tftp/$file_old $!";
+		my $line_one = 0;
+		$file_old =~ s/.cfg//;
+		while ((defined(my $line_file_cfg = <$file_cfg>)) && ($line_one == 0)){
+			if($line_file_cfg =~ /^(\;|$)/){
+				next;
+			}elsif($line_file_cfg =~ /^\#\!version\:1\.0\.0\.1/){
+				$hash_dir_files{'yealink'}{$file_old} = 1;
+				$line_one++;
+			}elsif($line_file_cfg =~ /^<<VOIP CONFIG FILE>>/){
+				$hash_dir_files{'qtech'}{$file_old} = 1;
+				$line_one++;
+			}
+		}
+	close($file_cfg);
 }
 
 #Cisco
@@ -259,7 +273,7 @@ foreach my $file_old (@dir_files){
 	$hash_dir_files{'cisco'}{$file_old} = 1;
 }
 
-#Создаем каталог в history, если наступило новео число.
+#Создаем каталог в history, если наступило новое число.
 opendir (CD, "$dir_history") || mkdir "$dir_history", 0744;
 closedir (CD);
 opendir (HIS, "$dir_history/$date_directory") || ((mkdir "$dir_history/$date_directory/", 0744) and (`chown asterisk:asterisk $dir_history/$date_directory`));
@@ -467,7 +481,7 @@ foreach my $key_brand (sort keys %hash_dir_files){
 		if (exists($hash_mac_model{$key_dir_files})){
 			
 		}else{
-			if($key_brand eq 'yealink'){
+			if(($key_brand eq 'yealink') || ($key_brand eq 'qtech')){
 				$key_dir_files = "${key_dir_files}.cfg"
 			}elsif($key_brand eq 'cisco'){
 				$key_dir_files = uc($key_dir_files);
@@ -503,6 +517,7 @@ foreach my $key_mac_address (sort keys %hash_mac_phone_pass){
 #Создаем файл конфигурации для sip-телефона.
 my $brand_yealink = 'yealink';
 my $brand_cisco = 'cisco';
+my $brand_qtech = 'qtech';
 
 open (my $file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line.conf") || die "Error opening file: ${date_time_file}_conf_number_line.conf $!";
 foreach my $key_number_line_mac (sort keys %hash_number_line){
@@ -981,6 +996,173 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 			print "!!!!!!!!$dir_tftp/SEP${mac_name_file_cisco}.cnf.xml\n";
 		}
 		&diff_file("$dir_tftp", "$tmp_dir", "SEP${mac_name_file_cisco}.cnf.xml");
+#Создаем файл конфигурации для Qtech "mac".cfg
+	}elsif(exists($hash_brand_model_conf{"$brand_qtech"}{$hash_mac_model{$key_number_line_mac}})){
+		my %hash_add_template_qtech = ();
+		my %hash_template_qtech = ();
+		my %hash_template_qtech_spec = ();
+		my $hash_template_qtech_i = 1;
+		open (my $file_tmp_mac_cfg, '>:encoding(utf-8)', "$tmp_dir/${date_time_file}_${key_number_line_mac}.cfg") || die "Error opening file: ${date_time_file}_${key_number_line_mac}.cfg $!";
+		open (my $file_model_cfg, '<:encoding(UTF-8)', "$dir_devices/$brand_qtech/$hash_mac_model{$key_number_line_mac}/$hash_mac_model{$key_number_line_mac}.cfg") || die "Error opening file: $hash_mac_model{$key_number_line_mac}.cfg $!";
+			while (defined(my $line_cfg = <$file_model_cfg>)){
+				if ($line_cfg =~ /^(\#|\;|<|$)/){
+					next;
+				}
+				chomp($line_cfg);
+				my @mas_line_cfg = split (/\:/,$line_cfg,2);
+				$hash_add_template_qtech{$mas_line_cfg[0]} = $mas_line_cfg[1]
+			}
+		close ($file_model_cfg);
+		my $yes_mac_name_file_phone = `ls -la $dir_devices/$brand_qtech/$hash_mac_model{$key_number_line_mac}| grep ${key_number_line_mac}.cfg\$`;
+		if($yes_mac_name_file_phone ne ''){
+			#если есть исключение, то считываем шаблон из него.
+			open (my $file_mac_cfg_spec, '<:encoding(UTF-8)', "$dir_devices/$brand_qtech/$hash_mac_model{$key_number_line_mac}/${key_number_line_mac}.cfg") || die "Error opening file: ${key_number_line_mac}.cfg $!";
+				my $line_razdel_1 = '';
+				while (defined(my $line_file_mac_cfg_spec = <$file_mac_cfg_spec>)){
+					chomp ($line_file_mac_cfg_spec);
+					if ($line_file_mac_cfg_spec =~ /^</){
+						$line_razdel_1 = $line_file_mac_cfg_spec;
+					}elsif($line_file_mac_cfg_spec =~ /^$/){
+#						print $file_tmp_mac_cfg "\n";
+					}else{
+						my @mas_line_file_mac_cfg_spec = split (/:/,$line_file_mac_cfg_spec,-1);
+						$hash_template_qtech_spec{$line_razdel_1}{$mas_line_file_mac_cfg_spec[0]}{'value'} = $mas_line_file_mac_cfg_spec[1];
+						$hash_template_qtech_spec{$line_razdel_1}{$mas_line_file_mac_cfg_spec[0]}{'count'} = 1;
+					}
+				}
+			close ($file_mac_cfg_spec);
+			open (my $file_mac_cfg, '<:encoding(UTF-8)', "$dir_devices/$brand_qtech/$hash_mac_model{$key_number_line_mac}/mac.cfg") || die "Error opening file: mac.cfg $!";
+				my $line_razdel = '';
+				while (defined(my $line_file_mac_cfg = <$file_mac_cfg>)){
+					chomp ($line_file_mac_cfg);
+					if($line_file_mac_cfg =~ /^<<END OF FILE>>/){
+						foreach my $key_razdel (sort keys %hash_template_qtech_spec){
+							my $ok = 1;
+							foreach my $key (sort keys %{$hash_template_qtech_spec{$key_razdel}}){
+								if($hash_template_qtech_spec{$key_razdel}{$key}{'count'} == 1){
+									if ($ok == 1){
+										print $file_tmp_mac_cfg "\n";
+										print $file_tmp_mac_cfg "$key_razdel\n";
+										$ok = 0;
+									}
+									print $file_tmp_mac_cfg "$key:$hash_template_qtech_spec{$key_razdel}{$key}{'value'}\n";
+									$hash_template_qtech_spec{$key_razdel}{$key}{'count'} = 0;
+								}
+							}
+						}
+						$line_razdel = $line_file_mac_cfg;
+						print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+					}elsif($line_file_mac_cfg =~ /^</){
+						$line_razdel = $line_file_mac_cfg;
+						print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+					}elsif($line_file_mac_cfg =~ /^$/){
+						if (exists($hash_template_qtech_spec{$line_razdel})){
+							foreach my $key (sort keys %{$hash_template_qtech_spec{$line_razdel}}){
+								if($hash_template_qtech_spec{$line_razdel}{$key}{'count'} == 1){
+									print $file_tmp_mac_cfg "$key:$hash_template_qtech_spec{$line_razdel}{$key}{'value'}\n";
+									$hash_template_qtech_spec{$line_razdel}{$key}{'count'} = 0;
+								}
+							}
+						}
+						print $file_tmp_mac_cfg "\n";
+					}elsif($line_file_mac_cfg =~ /^SIP\d+/){
+#						chomp ($line_file_mac_cfg);
+						my @mas_line_file_mac_cfg = split (/:/,$line_file_mac_cfg,-1);
+						my $param = $mas_line_file_mac_cfg[0];
+						my @mas_line_file_mac_cfg_2 = split (/ /,$mas_line_file_mac_cfg[0],-1);
+						$mas_line_file_mac_cfg_2[0] =~ s/SIP//;
+						my $number = '';
+						foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
+							if ($mas_line_file_mac_cfg_2[0] == $hash_number_line{$key_number_line_mac}{$key_number_line_number}){
+								$number = $key_number_line_number;
+							}
+						}
+						$param =~ s/SIP${mas_line_file_mac_cfg_2[0]} //;
+						my $c = 'SIP'."${mas_line_file_mac_cfg_2[0]}".' '."$param";
+#						print "!!!$param!\n";
+						if((exists($hash_add_template_qtech{$param})) and $number ne ''){
+							if(exists($hash_template_qtech_spec{$line_razdel}{"SIP${mas_line_file_mac_cfg_2[0]} $param"}{'value'})){
+								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_template_qtech_spec{$line_razdel}{$c}{'value'}\n";
+								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+							}else{
+								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_add_template_qtech{$param}\n";
+							}
+						}elsif(($param eq 'Phone Number  ') || ($param eq 'Display Name  ') || ($param eq 'Sip Name      ') || ($param eq 'Register User ') || ($param eq 'Proxy User    ')){
+							print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$number\n";
+							$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+						}elsif(($param eq 'Register Pswd ') || ($param eq 'Proxy Pswd    ')){
+							if(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
+								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_mac_phone_pass{$key_number_line_mac}{$number}\n";
+							}else{
+								print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+							}
+							if(exists($hash_template_qtech_spec{$line_razdel}{$c}{'value'})){
+								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+							}
+						}else{
+							if(exists($hash_template_qtech_spec{$line_razdel}{$c}{'value'})){
+								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_template_qtech_spec{$line_razdel}{$c}{'value'}\n";
+								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+							}else{
+								print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+							}
+						}
+					}else{
+						my @mas_line_file_mac_cfg = split (/:/,$line_file_mac_cfg,-1);
+						if(exists($hash_template_qtech_spec{$line_razdel}{$mas_line_file_mac_cfg[0]}{'value'})){
+							print $file_tmp_mac_cfg "$mas_line_file_mac_cfg[0]\:$hash_template_qtech_spec{$line_razdel}{$mas_line_file_mac_cfg[0]}{'value'}\n";
+							$hash_template_qtech_spec{$line_razdel}{$mas_line_file_mac_cfg[0]}{'count'} = 0;
+						}else{
+							print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+						}
+					}
+				}
+			close ($file_mac_cfg);
+		}else{
+			open (my $file_mac_cfg, '<:encoding(UTF-8)', "$dir_devices/$brand_qtech/$hash_mac_model{$key_number_line_mac}/mac.cfg") || die "Error opening file: mac.cfg $!";
+				my $line_razdel = '';
+				while (defined(my $line_file_mac_cfg = <$file_mac_cfg>)){
+					chomp ($line_file_mac_cfg);
+					if($line_file_mac_cfg =~ /^</){
+						$line_razdel = $line_file_mac_cfg;
+						print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+					}elsif($line_file_mac_cfg =~ /^$/){
+						print $file_tmp_mac_cfg "\n";
+					}elsif($line_file_mac_cfg =~ /^SIP\d+/){
+#						chomp ($line_file_mac_cfg);
+						my @mas_line_file_mac_cfg = split (/:/,$line_file_mac_cfg,-1);
+						my $param = $mas_line_file_mac_cfg[0];
+						my @mas_line_file_mac_cfg_2 = split (/ /,$mas_line_file_mac_cfg[0],-1);
+						$mas_line_file_mac_cfg_2[0] =~ s/SIP//;
+						my $number = '';
+						foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
+							if ($mas_line_file_mac_cfg_2[0] == $hash_number_line{$key_number_line_mac}{$key_number_line_number}){
+								$number = $key_number_line_number;
+							}
+						}
+						$param =~ s/SIP${mas_line_file_mac_cfg_2[0]} //;
+#						print "!!!$param!\n";
+						if((exists($hash_add_template_qtech{$param})) and $number ne ''){
+							print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_add_template_qtech{$param}\n";
+						}elsif(($param eq 'Phone Number  ') || ($param eq 'Display Name  ') || ($param eq 'Sip Name      ') || ($param eq 'Register User ') || ($param eq 'Proxy User    ')){
+							print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$number\n";
+						}elsif(($param eq 'Register Pswd ') || ($param eq 'Proxy Pswd    ')){
+							if(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
+								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_mac_phone_pass{$key_number_line_mac}{$number}\n";
+							}else{
+								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:\n";
+							}
+						}else{
+							print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+						}
+					}else{
+						print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+					}
+				}
+			close ($file_mac_cfg);
+		}
+		close($file_tmp_mac_cfg);
+		&diff_file("$dir_tftp", "$tmp_dir", "${key_number_line_mac}.cfg");
 	}
 }
 close ($file_1);
@@ -1194,6 +1376,8 @@ sub number_zero{
 				}
 			close ($file_1);
 		close ($file_tmp);
+	}elsif($brand eq 'qtech'){
+		###забить конфиг 0000
 	}elsif($brand eq 'cisco'){
 # !!!Cisco телефоны до перезагрузки не скачивают файл конфигурации. Рассмотреть вариант создания функции, которая будет по ssh ребутать cisco ip phone.
 		my $simple = XML::Simple->new(ForceArray => 1, KeepRoot => 1);
