@@ -16,7 +16,7 @@ use Data::Dumper;
 #fwconsole userman --syncall --force
 
 my $dir = '/opt/asterisk/script';
-my $dir_tftp = '/autoconfig';									#Директория для файлов конфигурации sip-телефонов .boot, .cfg и т.д.
+my $dir_tftp = '/autoconfig_old';									#Директория для файлов конфигурации sip-телефонов .boot, .cfg и т.д.
 my $dir_conf = "$dir/autoprovisioning";								#Директория для файлов конфигурации сервиса autoprovisioning.
 my $dir_devices = "$dir/devices";								#Директория шаблонов конфигурации всех поддерживаемых моделей sip-телефонов.
 my $dir_log = "$dir/log";									#Журналы
@@ -643,7 +643,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 					}
 				}
 			}
-			my $yes_file_cfg_local = `ls -la $dir_tftp| grep \' ${key_number_line_mac}-local.cfg\'\$`;
+			my $yes_file_cfg_local = `ls -la $dir_tftp| grep ${key_number_line_mac}-local.cfg\$`;
 ###			my $date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
 			$date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
 			if ($yes_file_cfg_local eq ''){
@@ -651,7 +651,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 					print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t Файла нет\n";
 				close($file_dir_log);
 				sleep 30;
-				$yes_file_cfg_local = `ls -la $dir_tftp| grep \' ${key_number_line_mac}-local.cfg\'\$`;
+				$yes_file_cfg_local = `ls -la $dir_tftp| grep ${key_number_line_mac}-local.cfg\$`;
 			}
 			my $mtime = 0;
 			my $size_file = 0;
@@ -816,7 +816,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 			}
 		close ($file_cfg_local);
 
-		my $yes_file_cfg = `ls -la $dir_tftp| grep \' ${key_number_line_mac}.cfg\'\$`;
+		my $yes_file_cfg = `ls -la $dir_tftp| grep ${key_number_line_mac}.cfg\$`;
 		if ($yes_file_cfg eq ''){
 			open (my $file_cfg_mac, '>:encoding(UTF-8)', "$dir_tftp/${key_number_line_mac}.cfg") || die "Error opening file: ${key_number_line_mac}.cfg $!";
 			close ($file_cfg_mac);
@@ -825,7 +825,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 			print "!!!!!!!!$dir_tftp/${key_number_line_mac}.cfg\n";
 		}
 		&diff_file("$dir_tftp", "$tmp_dir", "${key_number_line_mac}.cfg");
-		$yes_file_cfg_local = `ls -la $dir_tftp| grep \' ${key_number_line_mac}-local.cfg\'\$`;
+		$yes_file_cfg_local = `ls -la $dir_tftp| grep ${key_number_line_mac}-local.cfg\$`;
 		if ($yes_file_cfg_local eq ''){
 			open (my $file_cfg_local_mac, '>:encoding(UTF-8)', "$dir_tftp/${key_number_line_mac}-local.cfg") || die "Error opening file: ${key_number_line_mac}-local.cfg $!";
 			close ($file_cfg_local_mac);
@@ -1241,14 +1241,6 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 			close ($file_mac_cfg);
 		}
 		close($file_tmp_mac_cfg);
-		my $yes_file_cfg = `ls -la $dir_tftp| grep \' ${key_number_line_mac}.cfg\'\$`;
-		if ($yes_file_cfg eq ''){
-			open (my $file_cfg_mac, '>:encoding(UTF-8)', "$dir_tftp/${key_number_line_mac}.cfg") || die "Error opening file: $dir_tftp/${key_number_line_mac}.cfg $!";
-			close ($file_cfg_mac);
-			`chown tftpd:tftpd $dir_tftp/${key_number_line_mac}.cfg`;
-			`chmod 664 $dir_tftp/${key_number_line_mac}.cfg`;
-			print "Qtech!!!!!!!!$dir_tftp/${key_number_line_mac}.cfg\n";
-		}
 		&diff_file("$dir_tftp", "$tmp_dir", "${key_number_line_mac}.cfg");
 	}
 }
@@ -1365,7 +1357,7 @@ sub conf_boot{
 			print $file_boot "overwrite_mode = 1\n";
 		close ($file_boot);
 
-		my $yes_file_boot = `ls -la $dir_tftp| grep \' ${mac_address}.boot\'\$`;
+		my $yes_file_boot = `ls -la $dir_tftp| grep ${mac_address}.boot\$`;
 		if ($yes_file_boot eq ''){
 			open (my $file, '>:encoding(UTF-8)', "$dir_tftp/${mac_address}.boot") || die "Error opening file: $dir_tftp/${mac_address}.boot $!";
 			close ($file);
