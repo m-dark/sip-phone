@@ -1464,6 +1464,29 @@ sub number_zero{
 			close ($file_1);
 		close ($file_tmp);
 	}elsif($brand eq 'qtech'){
+		open (my $file_tmp, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_${file}") || die "Error opening file: ${date_time_file}_${file} $!";
+			open (my $file_1, '<:encoding(UTF-8)', "$dir_tftp/${file}") || die "Error opening file: ${file} $!";
+				while (defined(my $line_cfg_file_old = <$file_1>)){
+#					chomp ($line_cfg_file_old);
+					if ($line_cfg_file_old =~ /:/){
+						my @mas_line_cfg_file_old = split (/:/,$line_cfg_file_old,-1);
+						if ($mas_line_cfg_file_old[0] =~ /^(SIP\d+ Phone Number  |SIP\d+ Display Name  |SIP\d+ Sip Name      |SIP\d+ Register User |SIP\d+ Proxy User    |Fkey\d+ Title        )/){
+							print $file_tmp "$mas_line_cfg_file_old[0]:\n";
+						}elsif ($mas_line_cfg_file_old[0] =~ /^(SIP\d+ Register Pswd |SIP\d+ Proxy Pswd    )/){
+							print $file_tmp "$mas_line_cfg_file_old[0]:\n";
+						}elsif ($mas_line_cfg_file_old[0] =~ /^(SIP\d+ Register Addr |SIP\d+ Proxy Addr    )/){
+							print $file_tmp "$mas_line_cfg_file_old[0]:\n";
+						}elsif ($mas_line_cfg_file_old[0] =~ /^(SIP\d+ Enable Reg    )/){
+							print $file_tmp "$mas_line_cfg_file_old[0]:0\n";
+						}else{
+							print $file_tmp "$line_cfg_file_old";
+						}
+					}else{
+						print $file_tmp "$line_cfg_file_old";
+					}
+				}
+			close ($file_1);
+		close ($file_tmp);
 		###забить конфиг 0000
 	}elsif($brand eq 'cisco'){
 # !!!Cisco телефоны до перезагрузки не скачивают файл конфигурации. Рассмотреть вариант создания функции, которая будет по ssh ребутать cisco ip phone.
