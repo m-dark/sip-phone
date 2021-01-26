@@ -1039,7 +1039,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 						foreach my $key_razdel (sort keys %hash_template_qtech_spec){
 							my $ok = 1;
 							foreach my $key (sort keys %{$hash_template_qtech_spec{$key_razdel}}){
-								if($hash_template_qtech_spec{$key_razdel}{$key}{'count'} == 1){
+								if(defined($hash_template_qtech_spec{$key_razdel}{$key}{'count'}) && ($hash_template_qtech_spec{$key_razdel}{$key}{'count'} == 1)){
 									if ($ok == 1){
 										print $file_tmp_mac_cfg "\n";
 										print $file_tmp_mac_cfg "$key_razdel\n";
@@ -1058,7 +1058,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 					}elsif($line_file_mac_cfg =~ /^$/){
 						if (exists($hash_template_qtech_spec{$line_razdel})){
 							foreach my $key (sort keys %{$hash_template_qtech_spec{$line_razdel}}){
-								if($hash_template_qtech_spec{$line_razdel}{$key}{'count'} == 1){
+								if(defined($hash_template_qtech_spec{$line_razdel}{$key}{'count'}) && ($hash_template_qtech_spec{$line_razdel}{$key}{'count'} == 1)){
 									print $file_tmp_mac_cfg "$key:$hash_template_qtech_spec{$line_razdel}{$key}{'value'}\n";
 									$hash_template_qtech_spec{$line_razdel}{$key}{'count'} = 0;
 								}
@@ -1102,6 +1102,52 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 						}else{
 							if(exists($hash_template_qtech_spec{$line_razdel}{$c}{'value'})){
 								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_template_qtech_spec{$line_razdel}{$c}{'value'}\n";
+								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+							}else{
+								print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+							}
+						}
+					}elsif($line_file_mac_cfg =~ /^Fkey\d+/){
+						my @mas_line_file_mac_cfg = split (/:/,$line_file_mac_cfg,-1);
+						my $param = $mas_line_file_mac_cfg[0];
+						my @mas_line_file_mac_cfg_2 = split (/ /,$mas_line_file_mac_cfg[0],-1);
+						$mas_line_file_mac_cfg_2[0] =~ s/Fkey//;
+						my $number = '';
+						foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
+							if ($mas_line_file_mac_cfg_2[0] == $hash_number_line{$key_number_line_mac}{$key_number_line_number}){
+								$number = $key_number_line_number;
+							}
+						}
+						$param =~ s/Fkey${mas_line_file_mac_cfg_2[0]} //;
+						my $c = 'Fkey'."${mas_line_file_mac_cfg_2[0]}".' '."$param";
+						if($param eq 'Title        '){
+							if(exists($hash_template_qtech_spec{$line_razdel}{$c}{'value'})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:$hash_template_qtech_spec{$line_razdel}{$c}{'value'}\n";
+								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+							}else{
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:$number\n";
+							}
+						}elsif($param eq 'Type         '){
+							if(exists($hash_template_qtech_spec{$line_razdel}{$c}{'value'})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:$hash_template_qtech_spec{$line_razdel}{$c}{'value'}\n";
+								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+							}elsif(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:2\n";
+							}else{
+								print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+							}
+						}elsif($param eq 'Value        '){
+							if(exists($hash_template_qtech_spec{$line_razdel}{$c}{'value'})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:$hash_template_qtech_spec{$line_razdel}{$c}{'value'}\n";
+								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
+							}elsif(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:SIP${mas_line_file_mac_cfg_2[0]}\n";
+							}else{
+								print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+							}
+						}else{
+							if(exists($hash_template_qtech_spec{$line_razdel}{$c}{'value'})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:$hash_template_qtech_spec{$line_razdel}{$c}{'value'}\n";
 								$hash_template_qtech_spec{$line_razdel}{$c}{'count'} = 0;
 							}else{
 								print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
@@ -1151,6 +1197,39 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:$hash_mac_phone_pass{$key_number_line_mac}{$number}\n";
 							}else{
 								print $file_tmp_mac_cfg "SIP${mas_line_file_mac_cfg_2[0]} $param\:\n";
+							}
+						}else{
+							print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
+						}
+					}elsif($line_file_mac_cfg =~ /^Fkey\d+/){
+#						chomp ($line_file_mac_cfg);
+						my @mas_line_file_mac_cfg = split (/:/,$line_file_mac_cfg,-1);
+						my $param = $mas_line_file_mac_cfg[0];
+						my @mas_line_file_mac_cfg_2 = split (/ /,$mas_line_file_mac_cfg[0],-1);
+						$mas_line_file_mac_cfg_2[0] =~ s/Fkey//;
+						my $number = '';
+						foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
+							if ($mas_line_file_mac_cfg_2[0] == $hash_number_line{$key_number_line_mac}{$key_number_line_number}){
+								$number = $key_number_line_number;
+							}
+						}
+						$param =~ s/Fkey${mas_line_file_mac_cfg_2[0]} //;
+#						print "!!!$param!\n";
+						if((exists($hash_add_template_qtech{$param})) and $number ne ''){
+							print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:$hash_add_template_qtech{$param}\n";
+						}elsif($param eq 'Title        '){
+							print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:$number\n";
+						}elsif($param eq 'Type         '){
+							if(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:2\n";
+							}else{
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:\n";
+							}
+						}elsif($param eq 'Value        '){
+							if(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:SIP${mas_line_file_mac_cfg_2[0]}\n";
+							}else{
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:\n";
 							}
 						}else{
 							print $file_tmp_mac_cfg "$line_file_mac_cfg\n";
