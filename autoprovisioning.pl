@@ -1223,7 +1223,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 							if(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
 								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:2\n";
 							}else{
-								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:\n";
+								print $file_tmp_mac_cfg "Fkey${mas_line_file_mac_cfg_2[0]} $param\:0\n";
 							}
 						}elsif($param eq 'Value        '){
 							if(exists($hash_mac_phone_pass{$key_number_line_mac}{$number})){
