@@ -460,6 +460,8 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 			$hash_named_db{"$$ref[0]"}{namedcallgroup} = "$$ref[4]";
 			$hash_named_db{"$$ref[0]"}{namedpickupgroup} = "$$ref[5]";
 #			print $file "$$ref[0]\t$$ref[1]\t\L$$ref[2]\t$$ref[3]\t$$ref[4]\t$$ref[5]\n";
+		}elsif($$ref[0] =~ /^99\d{3,6}/){
+			#Если у пользователя в UCP включен UCP Phone, то создается номер 99"внутренний номер сотрудника", который работает через webrtc.
 		}else{
 			print "ERROR_3: В FreePBX  номер $$ref[0] создан, а в AD его не стало. (можно удалить из exten, если этот номер там не нужен)\n";
 			next;
