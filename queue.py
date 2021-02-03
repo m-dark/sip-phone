@@ -103,6 +103,7 @@ if((sys.argv[2] == '10050') or (sys.argv[2] == '3110050') or (sys.argv[2] == '31
 			except Exception:
 				print("Error occuried during web request!")
 				print(sys.exc_info()[1])
+				log.error('Информация по вызову с ID: '+sys.argv[1]+' не отправлена, так как '+URL+' вернул ошибку: '+sys.exc_info()[1])
 
 		log.info(' Номер входящего маршрута: '+sys.argv[2]+' ID вызова: '+sys.argv[1]+' номер A: '+job[number_b]['src']+' номер B: '+number_b+' продолжительность разговора: '+str(job[number_b]['billsec'])+' сек.')
 else:
