@@ -4,6 +4,22 @@
 #pip3.6 install --upgrade pip
 #pip3.6 install pymysql
 #chmod 767 /opt/asterisk/script/log
+#copy queue.py to /var/lib/asterisk/agi-bin/queue.py
+
+#Add /etc/asterisk/extensions_custom.conf
+#[sub-call-from-cid-ended]
+#exten => s,1,GotoIf($[«${ARG1}» = «» | «${ARG2}» = «»]?end)
+#exten => s,n,NoOp(-------------------------------------------------------Call from ${ARG1} to ${ARG2} ID ${UNIQUEID}----------------------------------------------------------------------)
+#exten => s,n,AGI(queue.py,${UNIQUEID},${ARG2})
+#exten => n(end),Return
+#;--== end of [sub-call-from-cid-ended] ==--;
+
+#And Add /etc/asterisk/extensions_override_freepbx.conf
+#to [ext-did-0002]
+#>exten => 3110050,n,ExecIf($["${CRM_DIRECTION}"="INBOUND"]?Set(CHANNEL(hangup_handler_push)=crm-hangup,s,1))
+#!!!exten => 3110050,n,Set(CHANNEL(hangup_handler_push)=sub-call-from-cid-ended,s,1(${CALLERID(num)},${EXTEN}))
+#>exten => 3110050,n(dest-ext),Goto(ext-queues,10050,1)
+
 
 import os
 import subprocess
