@@ -3,6 +3,7 @@
 #yum install python36u-pip
 #pip3.6 install --upgrade pip
 #pip3.6 install pymysql
+#chmod 767 /opt/asterisk/script/log
 
 import os
 import subprocess
@@ -13,15 +14,10 @@ import datetime
 import logging
 from datetime import timedelta
 from datetime import datetime
-#import xml.etree.ElementTree as ET
 from urllib import request, parse
-#import urllib.request
-#import urllib.parse
 import ssl
 URL = "https://sedrestore.egov66.ru/freepbx/"
 data = ''
-#headers = {}
-#headers['Content-Type'] = 'application/xml'
 date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
 dir_conf = '/opt/asterisk/script/'
 array = []
@@ -35,7 +31,7 @@ fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] - %(name)s:%(mess
 log.addHandler(fh)
 log.setLevel(logging.DEBUG)
 
-if(sys.argv[2] == '10050'):
+if((sys.argv[2] == '10050') or (sys.argv[2] == '3110050') or (sys.argv[2] == '3120996')):
 	result_date_start=re.match(r'(\d+\.\d+)', sys.argv[1])
 	if result_date_start is None:
 		print('Error_01: linkedid '+sys.argv[1]+' не соответствует формату!')
@@ -92,6 +88,6 @@ if(sys.argv[2] == '10050'):
 				print("Error occuried during web request!")
 				print(sys.exc_info()[1])
 
-		log.info('Тот номер:    '+sys.argv[2]+' ID: '+sys.argv[1]+' номер B:'+number_b+' продолжительность:'+str(job[number_b]['billsec'])+' секунд')
+		log.info(' Номер входящего маршрута: '+sys.argv[2]+' ID вызова: '+sys.argv[1]+' номер A: '+job[number_b]['src']+' номер B: '+number_b+' продолжительность разговора: '+str(job[number_b]['billsec'])+' сек.')
 else:
-	log.info('Не тот номер: '+sys.argv[2]+' А вот ID: '+sys.argv[1])
+	log.warning(' Отправка информации по маршруту: '+sys.argv[2]+' не настроена, ID вызова: '+sys.argv[1])
