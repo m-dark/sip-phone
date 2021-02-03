@@ -58,7 +58,7 @@ if((sys.argv[2] == '10050') or (sys.argv[2] == '3110050') or (sys.argv[2] == '31
 
 	db = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 	cursor = db.cursor()
-	cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE (linkedid = %s) AND (disposition = %s)", (linkedid, 'ANSWERED'))
+	cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE (linkedid = %s) AND (disposition = %s) AND (billsec != '0')", (linkedid, 'ANSWERED'))
 	for row in cursor:
 		if job.get(row[1]) is None:
 			job[row[1]] = {}
