@@ -57,7 +57,7 @@ else:
 	print(sys.argv[1])
 	log.info('Вызов с ID: '+sys.argv[1]+' номер B: '+ sys.argv[2])
 time.sleep(4)
-db = pymysql.connect(host="localhost", user="freepbxuser", passwd="4rBxjQWnLlFQ", db="asteriskcdrdb", charset='utf8')
+db = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 cursor = db.cursor()
 cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE ((uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
 #cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE (uniqueid = %s) AND (disposition = %s) AND (billsec != '0')", (linkedid, 'ANSWERED'))
