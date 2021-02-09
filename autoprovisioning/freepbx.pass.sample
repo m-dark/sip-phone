@@ -6,6 +6,12 @@ user = freepbxuser
 pass = pAsfF0dsW/1m1221
 db = asterisk
 
+# Данные для скрипта queue.py
+queue_db = asteriskcdrdb
+queue_url = "Урл на который необходимо отправлять post запрос с данными"
+#Номера, которые являются служебными и статистика по этим номерам из CDR не должна отправлятся на queue_url
+queue_number_no_mess_push = 10010,10050,10051,10053
+
 # Данные для скрипта mixmon_mp3.pl
 cdrdb = asteriskcdrdb
 cdrtable = cdr
