@@ -55,7 +55,7 @@ if result_date_start is None:
 else:
 	linkedid = sys.argv[1]
 	print(sys.argv[1])
-	log.info('Вызов с ID: '+sys.argv[1]+' номер B: '+ sys.argv[2])
+#	log.info('Вызов с ID: '+sys.argv[1]+' номер B: '+ sys.argv[2])
 time.sleep(4)
 db = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
 cursor = db.cursor()

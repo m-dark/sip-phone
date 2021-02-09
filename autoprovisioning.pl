@@ -675,7 +675,8 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 					$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				}
 				if($s==10){
-					next;
+					$yes_file_cfg_local = '';
+#					next;
 				}
 				while (($difference_in_time <= 10) or (($difference_in_time >= 295) and ($difference_in_time <= 310))){
 					$date_time_file_now = strftime "%Y-%m-%d %H:%M:%S", localtime(time);
