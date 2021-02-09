@@ -32,13 +32,15 @@ from datetime import datetime
 from urllib import request, parse
 import ssl
 import time
-URL = "https://sedrestore.egov66.ru/freepbx/"
+URL = ''
 data = ''
 date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
 dir_conf = '/opt/asterisk/script/'
 array = []
+queue_number_no_mess_push_i = []
 linkedid = ''
 timestart = ''
+queue_db = ''
 job = dict()
 log = logging.getLogger("QueueCalls")
 fh = logging.FileHandler(dir_conf+'log/post.log')
@@ -56,8 +58,30 @@ else:
 	linkedid = sys.argv[1]
 	print(sys.argv[1])
 #	log.info('Вызов с ID: '+sys.argv[1]+' номер B: '+ sys.argv[2])
+
+freepbx_pass = open (str(dir_conf)+'autoprovisioning/freepbx.pass','r')
+for line in (line.rstrip() for line in freepbx_pass.readlines()):
+	result_line=re.match(r'queue_db = ', line)
+	if result_line is not None:
+		param_queue_db=line.split(' = ')
+		queue_db=param_queue_db[1]
+	result_line=re.match(r'queue_url = ', line)
+	if result_line is not None:
+		param_queue_url=line.split(' = ')
+		URL=param_queue_url[1]
+	result_line=re.match(r'queue_number_no_mess_push = ', line)
+	if result_line is not None:
+		queue_number_no_mess_push_array = line.split(' = ')
+		queue_number_no_mess_push_1 = queue_number_no_mess_push_array[1]
+		result_line=re.search(',', queue_number_no_mess_push_1)
+		if result_line is not None:
+			queue_number_no_mess_push_i=queue_number_no_mess_push_1.split(',')
+		else:
+			queue_number_no_mess_push_i.append(queue_number_no_mess_push_1)
+freepbx_pass.close()
+
 time.sleep(4)
-db = pymysql.connect(host="localhost", user="root", passwd="", db="asteriskcdrdb", charset='utf8')
+db = pymysql.connect(host="localhost", user="root", passwd="", db=queue_db, charset='utf8')
 cursor = db.cursor()
 cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE ((uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
 #cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE (uniqueid = %s) AND (disposition = %s) AND (billsec != '0')", (linkedid, 'ANSWERED'))
@@ -72,7 +96,13 @@ for row in cursor:
 	print(row)
 
 for number_b in job:
-	if ((number_b == '10010') or (number_b == '10050') or (number_b == '10051') or (number_b == '10052') or (number_b == '10053')):
+	skip = 'no'
+	for number_file in queue_number_no_mess_push_i:
+		if number_b == number_file:
+			skip = 'yes'
+		else:
+			skip = 'no'
+	if (skip == 'yes'):
 		print('Общую продолжительность вызова на номер 10050 не отправляем!')
 	else:
 		try:
