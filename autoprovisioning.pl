@@ -371,13 +371,13 @@ while (my $ref = $sth_sipid->fetchrow_arrayref) {
 		$hash_sipid_displayname{$$ref[0]} = $hash_displayname{$$ref[1]};
 		next;
 	}
-	if ($$ref[1] =~ /^[А-Я][а-я]+\s[А-Я][а-я]+\s[А-Я][а-я]+$/){
+	if ($$ref[1] =~ /^[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+$/){
 		my @array_fio = split (/ /,$$ref[1],-1);
 		my $name = substr($array_fio[1],0,1);
 		my $otc = substr($array_fio[2],0,1);
 #		print "$array_fio[0] $name\.$otc\.\n";
 		$hash_sipid_displayname{$$ref[0]} = "$array_fio[0] $name\.$otc\.";
-	}elsif ($$ref[1] =~ /^[А-Я][а-я]+\s[А-Я][а-я]+\s[А-Я][а-я]+\s\d+$/){
+	}elsif ($$ref[1] =~ /^[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+\s\d+$/){
 		my @array_fio = split (/ /,$$ref[1],-1);
 		my $name = substr($array_fio[1],0,1);
 		my $otc = substr($array_fio[2],0,1);
@@ -443,7 +443,7 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 		}
 #		print "$$ref[0]\t$$ref[1]\t$$ref[2]\t$$ref[3]\t$$ref[4]\n";
 		if (defined ($$ref[2] && $$ref[3])){
-			if($$ref[2] =~ /[а-яА-Я]/){
+			if($$ref[2] =~ /[а-яёА-ЯЁ]/){
 				print "Error_7, В mac-адресе $$ref[2] присутствует русская буква!\n";
 			}
 			if (exists($hash_mac_model{"\L$mac_adr"})){
