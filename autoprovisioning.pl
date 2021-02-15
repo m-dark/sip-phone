@@ -732,7 +732,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				$difference_in_time = ($time_now - $mtime);
 				while($size_file < 17){
-					if($s==10){
+					if($s==5){
 						open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
 							print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\tРазмер файла: $size_file\n";
 						close($file_dir_log);
@@ -742,7 +742,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 					$s++;
 					$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				}
-				if($s==10){
+				if($s==5){
 					$yes_file_cfg_local = '';
 #					next;
 				}
