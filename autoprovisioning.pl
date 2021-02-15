@@ -64,8 +64,9 @@ my %hash_mac_model = ();									#Хэш mac-адресов с версией м
 my %hash_mac_phone_pass = ();									#Хэш содержит mac-адреса sip-телефонов с номерами телефонов и паролями от sip-учеток этих номеров.
 my %hash_displayname = ();									#Хэш который содержит в себе displayname из файла freepbx.pass, которые необходимо заменить для справочника.
 my %hash_dir_files = ();									#Хэш содержит список файлов конфигураций для всех sip-телефонов из каталога TFTP-server (для удаления sip-учетки на sip-телефонах, которые удалили из AD)
-my %hash_template_yealink = ();									#Хэш содержит конфигурацию шаблона из файла XXXPPP.cfg {"mac yealinka"}{"номер строки"}{"Значение до равно"} = "Значение после ="
+my %hash_template_yealink = ();									#Хэш содержит конфигурацию шаблона из файла XX.cfg {"mac yealinka"}{"номер строки"}{"Значение до равно"} = "Значение после ="
 my %hash_template_qtech = ();
+my %hash_tls_srtp_on = ();									#Хэш содержит номера телефонов у которых необходимо включить шифрование трафика tls_srtp
 
 open (my $file_conf_number_line, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
 	while (defined(my $line_number_line = <$file_conf_number_line>)){
@@ -125,9 +126,9 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                                 $sip_server_2_port = $array_freepbx_pass[1];
                         }when('local_cfg'){
                                 my @array_local_cfg = split(/\;/,$array_freepbx_pass[1],-1);
-                                foreach my $numper_local_cfg (@array_local_cfg){
-                                        my @array_number_local_cfg = split (/:/,$numper_local_cfg,2);
-                                        $array_number_local_cfg[0] =~ s/ //;
+                                foreach my $number_local_cfg (@array_local_cfg){
+                                        my @array_number_local_cfg = split (/:/,$number_local_cfg,2);
+                                        $array_number_local_cfg[0] =~ s/ //g;
                                         my @array_number_local_cfg_mac = split(/ = /,$array_number_local_cfg[1],2);
                                         if ($array_number_local_cfg[0] =~ /-/){
                                                 my @array_number_local_cfg_start_end = split(/-/,$array_number_local_cfg[0],2);
@@ -164,9 +165,9 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                                 }
                         }when('mac_cfg'){
                                 my @array_cfg = split(/\;/,$array_freepbx_pass[1],-1);
-                                foreach my $numper_cfg (@array_cfg){
-                                        my @array_number_cfg = split (/:/,$numper_cfg,2);
-                                        $array_number_cfg[0] =~ s/ //;
+                                foreach my $number_cfg (@array_cfg){
+                                        my @array_number_cfg = split (/:/,$number_cfg,2);
+                                        $array_number_cfg[0] =~ s/ //g;
                                         my @array_number_cfg_mac = split(/ = /,$array_number_cfg[1],2);
                                         if ($array_number_cfg[0] =~ /-/){
                                                 my @array_number_cfg_start_end = split(/-/,$array_number_cfg[0],2);
@@ -199,6 +200,22 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                     	}when('displayname'){
                     		my @array_displayname = split (/ - /,$array_freepbx_pass[1],2);
                     		$hash_displayname{$array_displayname[0]} = $array_displayname[1];
+                    	}when('tls_srtp_on'){
+                    		my @array_tls_srtp_on = split (/\,/,$array_freepbx_pass[1],-1);
+                    		foreach my $number_tls_srtp_on (@array_tls_srtp_on){
+                    			$number_tls_srtp_on =~ s/ //g;
+                    			if($number_tls_srtp_on =~ /-/){
+                    				my @array_number_tls_srtp_on_start_end = split(/-/,$number_tls_srtp_on,2);
+                                                if($array_number_tls_srtp_on_start_end[0] < $array_number_tls_srtp_on_start_end[1]){
+                                                        while($array_number_tls_srtp_on_start_end[0] != ($array_number_tls_srtp_on_start_end[1]+1)){
+                                                                $hash_tls_srtp_on{$array_number_tls_srtp_on_start_end[0]} = 1;
+                                                                $array_number_tls_srtp_on_start_end[0]++;
+                                                        }
+                                                }
+                    			}else{
+                    				$hash_tls_srtp_on{$number_tls_srtp_on} = 1;
+                    			}
+                    		}
                         }default{
                                 next;
                         }
@@ -231,6 +248,8 @@ open (my $file_brand_model, '<:encoding(UTF-8)', "$dir_conf/brand_model.cfg") ||
 							$hash_brand_model_conf{$brand}{$line_file_brand_model}{'mac_boot'} = $array_name_cfg[1];
 						}when('ver_rom'){
 							$hash_brand_model_conf{$brand}{$line_file_brand_model}{'ver_rom'} = $array_name_cfg[1];
+						}when('ver_rom_tls_srtp'){
+							$hash_brand_model_conf{$brand}{$line_file_brand_model}{'ver_rom_tls_srtp'} = $array_name_cfg[1];
                 				}default{
                 					next;
                 				}
@@ -564,6 +583,12 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				$file_template_cfg = $hash_brand_model_conf{"$brand_yealink"}{$hash_mac_model{$key_number_line_mac}}{'ver_rom'};
 			}
 			foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
+				if (exists($hash_tls_srtp_on{$key_number_line_number})){
+					if(exists($hash_brand_model_conf{"$brand_yealink"}{$hash_mac_model{$key_number_line_mac}}{'ver_rom_tls_srtp'})){
+						$file_template_cfg = $hash_brand_model_conf{"$brand_yealink"}{$hash_mac_model{$key_number_line_mac}}{'ver_rom_tls_srtp'};
+					}
+					print "$key_number_line_number\t$file_template_cfg\n";
+				}
 				open (my $file_xx, '<:encoding(UTF-8)', "$dir_conf/$file_template_cfg.cfg") || die "Error opening file: $file_template_cfg.cfg $!";
 					while (defined(my $line_cfg = <$file_xx>)){
 						if ($line_cfg =~ /^(\#|\;)/){
@@ -664,17 +689,17 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				$difference_in_time = ($time_now - $mtime);
 				while($size_file < 17){
-					if($s==10){
+					if($s==3){
 						open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
 							print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\tРазмер файла: $size_file\n";
 						close($file_dir_log);
 						last;
 					}
-					sleep 10;
+					sleep 5;
 					$s++;
 					$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				}
-				if($s==10){
+				if($s==3){
 					$yes_file_cfg_local = '';
 #					next;
 				}
