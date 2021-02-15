@@ -46,6 +46,7 @@ my $fwd_enable = 1;
 my $rename_linekey = 1;
 my $rename_memorykey = 1;
 my $rename_expansion_module = 1;
+my $profile_ldap_def = 'profile.ldap.cfg';
 #my $script_dir = Заменил на $dir;
 #my $history_dir = "заменил на dir_history";
 
@@ -67,6 +68,7 @@ my %hash_dir_files = ();									#Хэш содержит список файл�
 my %hash_template_yealink = ();									#Хэш содержит конфигурацию шаблона из файла XX.cfg {"mac yealinka"}{"номер строки"}{"Значение до равно"} = "Значение после ="
 my %hash_template_qtech = ();
 my %hash_tls_srtp_on = ();									#Хэш содержит номера телефонов у которых необходимо включить шифрование трафика tls_srtp
+my %hash_profile_ldap_castom = ();								#Хэш содержит настройки записной книги LDAP для номеров с индивидуальными настройками
 
 open (my $file_conf_number_line, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
 	while (defined(my $line_number_line = <$file_conf_number_line>)){
@@ -124,6 +126,8 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                                 $sip_server_2_address = $array_freepbx_pass[1];
                         }when('sip_server_2_port'){
                                 $sip_server_2_port = $array_freepbx_pass[1];
+                        }when('profile_ldap_def'){
+                                $profile_ldap_def = $array_freepbx_pass[1];
                         }when('local_cfg'){
                                 my @array_local_cfg = split(/\;/,$array_freepbx_pass[1],-1);
                                 foreach my $number_local_cfg (@array_local_cfg){
@@ -216,6 +220,34 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                     				$hash_tls_srtp_on{$number_tls_srtp_on} = 1;
                     			}
                     		}
+                        }when('profile_ldap_castom'){
+                                my @array_profile_ldap_castom = split(/\;/,$array_freepbx_pass[1],-1);
+                                foreach my $number_profile_ldap_castom (@array_profile_ldap_castom){
+                                        my @array_number_profile_ldap_castom = split (/:/,$number_profile_ldap_castom,2);
+                                        $array_number_profile_ldap_castom[0] =~ s/ //g;
+                                        if ($array_number_profile_ldap_castom[0] =~ /-/){
+                                                my @array_number_profile_ldap_castom_start_end = split(/-/,$array_number_profile_ldap_castom[0],2);
+                                                if($array_number_profile_ldap_castom_start_end[0] < $array_number_profile_ldap_castom_start_end[1]){
+                                                        while($array_number_profile_ldap_castom_start_end[0] != ($array_number_profile_ldap_castom_start_end[1]+1)){
+                                                                foreach my $key_mac (sort keys %hash_number_line){
+                                                                        if (exists($hash_number_line{$key_mac}{$array_number_profile_ldap_castom_start_end[0]})){
+                                                                                $hash_profile_ldap_castom{$key_mac} = $array_number_profile_ldap_castom[1];
+                                                                                print"$key_mac\t$array_number_profile_ldap_castom_start_end[0]\t$array_number_profile_ldap_castom[1]\n";
+                                                                                next;
+                                                                        }
+                                                                }
+                                                                $array_number_profile_ldap_castom_start_end[0]++;
+                                                        }
+                                                }
+                                        }else{
+                                                foreach my $key_mac (sort keys %hash_number_line){
+                                                        if (exists($hash_number_line{$key_mac}{$array_number_profile_ldap_castom[0]})){
+                                                                $hash_cfg_mac{$key_mac} = $array_number_profile_ldap_castom[1];
+                                                                last;
+                                                        }
+                                                }
+                                        }
+                                }
                         }default{
                                 next;
                         }
@@ -653,6 +685,17 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 					}
 				}
 			}
+			if(exists($hash_profile_ldap_castom{$key_number_line_mac})){
+				$profile_ldap_def = $hash_profile_ldap_castom{$key_number_line_mac};
+			}
+			open (my $file_profile_ldap, '<:encoding(UTF-8)', "$dir_conf/$profile_ldap_def") || die "Error opening file: $dir_conf/$profile_ldap_def $!";
+				while (defined(my $line_profile_ldap = <$file_profile_ldap>)){
+					if ($line_profile_ldap =~ /^(\#|\;)/){
+						next;
+					}
+					print $file_cfg "$line_profile_ldap";
+				}
+			close($file_profile_ldap);
 		close ($file_cfg);
 		open (my $file_cfg_local, '>:encoding(utf-8)', "$tmp_dir/${date_time_file}_${key_number_line_mac}-local.cfg") || die "Error opening file: ${date_time_file}_${key_number_line_mac}-local.cfg $!";
 #####			print $file_cfg_local "#!version:1.0.0.1\n";
@@ -689,7 +732,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				$difference_in_time = ($time_now - $mtime);
 				while($size_file < 17){
-					if($s==3){
+					if($s==10){
 						open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
 							print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\tРазмер файла: $size_file\n";
 						close($file_dir_log);
@@ -699,7 +742,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 					$s++;
 					$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				}
-				if($s==3){
+				if($s==10){
 					$yes_file_cfg_local = '';
 #					next;
 				}
