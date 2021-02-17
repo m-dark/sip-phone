@@ -21,6 +21,7 @@
 #>exten => 3110050,n(dest-ext),Goto(ext-queues,10050,1)
 
 import os
+import re
 import subprocess
 import pymysql
 import sys
@@ -84,16 +85,30 @@ time.sleep(4)
 db = pymysql.connect(host="localhost", user="root", passwd="", db=queue_db, charset='utf8')
 cursor = db.cursor()
 #cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, linkedid, 'ANSWERED', linkedid, linkedid, 'ANSWERED'))
-cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE ((dst REGEXP '^[0-9]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
+cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[0-9]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
 #cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE (uniqueid = %s) AND (disposition = %s) AND (billsec != '0')", (linkedid, 'ANSWERED'))
 for row in cursor:
-	if job.get(row[1]) is None:
-		job[row[1]] = {}
-		job[row[1]]['timestart'] = row[0]
-		job[row[1]]['src'] = row[2]
-		job[row[1]]['billsec'] = row[3]
+	number_b_new = row[1]
+	number_b_transfer = ''
+	result=re.match(r'Local/FMPR-', row[4])
+	if result is not None:
+		param=row[4].split('@')
+		number_local=param[0].split('-')
+		number_b_transfer = number_local[1]
+	result=re.match(r'SIP/', row[4])
+	if result is not None:
+		param=row[4].split(',')
+		number_trans=param[0].split('/')
+		number_b_transfer = number_trans[2]
+	if number_b_transfer != '' and number_b_transfer != row[1]:
+		number_b_new = number_b_transfer
+	if job.get(number_b_new) is None:
+		job[number_b_new] = {}
+		job[number_b_new]['timestart'] = row[0]
+		job[number_b_new]['src'] = row[2]
+		job[number_b_new]['billsec'] = row[3]
 	else:
-		job[row[1]]['billsec'] = job[row[1]]['billsec'] + row[3]
+		job[number_b_new]['billsec'] = job[number_b_new]['billsec'] + row[3]
 	print(row)
 
 for number_b in job:
