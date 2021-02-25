@@ -69,6 +69,9 @@ my %hash_template_yealink = ();									#Хэш содержит конфигу�
 my %hash_template_qtech = ();
 my %hash_tls_srtp_on = ();									#Хэш содержит номера телефонов у которых необходимо включить шифрование трафика tls_srtp
 my %hash_profile_ldap_castom = ();								#Хэш содержит настройки записной книги LDAP для номеров с индивидуальными настройками
+my %hash_exp_mod = ();										#Хэш содержитномер телефона с параметрами для которого необходимо на автомате заполнять
+my %hash_exp_mod_custom = (); 									#Хэш содержит номера для которых есть файлы с кастомными настройками в каталоге /opt/asterisk/script/devices/yealink/
+my %hash_exp_mod_data = ();
 
 open (my $file_conf_number_line, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
 	while (defined(my $line_number_line = <$file_conf_number_line>)){
@@ -220,6 +223,75 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                     				$hash_tls_srtp_on{$number_tls_srtp_on} = 1;
                     			}
                     		}
+                    	}when('exp_mod'){
+                    		$array_freepbx_pass[1] =~ s/ //g;
+                    		my @array_exp_mod = split(/\;/,$array_freepbx_pass[1],-1);
+                    		my @array_exp_mod_c = split (/\,/,$array_exp_mod[0],-1);
+                    		foreach my $number_exp_mod_c (@array_exp_mod_c){
+                    			if($number_exp_mod_c =~ /-/){
+                    				my @array_number_exp_mod_c_start_end = split(/-/,$number_exp_mod_c,2);
+                                                if($array_number_exp_mod_c_start_end[0] < $array_number_exp_mod_c_start_end[1]){
+                                                	while($array_number_exp_mod_c_start_end[0] != ($array_number_exp_mod_c_start_end[1]+1)){
+                                            			foreach my $key_mac (sort keys %hash_number_line){
+                                            				if (exists($hash_number_line{$key_mac}{$array_number_exp_mod_c_start_end[0]})){
+                                            					if(exists($hash_exp_mod{$key_mac})){
+                                            						print "Error_102: Модули exp, номер $array_number_exp_mod_c_start_end[0] прописан несколько раз в файле freepbx.pass \n";
+                                            					}
+	                                                    			$hash_exp_mod{$key_mac}{'exp'} = $array_exp_mod[1];
+    	                                                			$hash_exp_mod{$key_mac}{'pool'} = $array_exp_mod[2];
+        	                                            			$hash_exp_mod{$key_mac}{'fill_mode'} = $array_exp_mod[3];
+                	                                			$hash_exp_mod{$key_mac}{'type'} = $array_exp_mod[4];
+#                	                                			print "$key_mac\t pool\t $array_exp_mod[2]\n";
+                	                                			last;
+									}
+								}
+								$array_number_exp_mod_c_start_end[0]++;
+                                                        }
+                                                }
+                    			}else{
+                    				foreach my $key_mac (sort keys %hash_number_line){
+                    					if (exists($hash_number_line{$key_mac}{$number_exp_mod_c})){
+                    						if(exists($hash_exp_mod{$key_mac})){
+                    							print "Error_103: Модули exp, номер $number_exp_mod_c прописан несколько раз в файле freepbx.pass \n";
+								}
+								$hash_exp_mod{$key_mac}{'exp'} = $array_exp_mod[1];
+								$hash_exp_mod{$key_mac}{'pool'} = $array_exp_mod[2];
+								$hash_exp_mod{$key_mac}{'fill_mode'} = $array_exp_mod[3];
+								$hash_exp_mod{$key_mac}{'type'} = $array_exp_mod[4];
+#								print "$key_mac\t pool\t $array_exp_mod[2]\n";
+								last;
+                    					}
+                    				}
+                    			}
+                    		}
+                    	}when('exp_mod_custom'){
+                    		$array_freepbx_pass[1] =~ s/ //g;
+                    		my @array_exp_mod_custom = split (/\,/,$array_freepbx_pass[1],-1);
+                    		foreach my $number_exp_mod_custom (@array_exp_mod_custom){
+                    			if($number_exp_mod_custom =~ /-/){
+                    				my @array_number_exp_mod_custom_start_end = split(/-/,$number_exp_mod_custom,2);
+                                                if($array_number_exp_mod_custom_start_end[0] < $array_number_exp_mod_custom_start_end[1]){
+                                                        while($array_number_exp_mod_custom_start_end[0] != ($array_number_exp_mod_custom_start_end[1]+1)){
+                                                    		foreach my $key_mac (sort keys %hash_number_line){
+                                                    			if (exists($hash_number_line{$key_mac}{$array_number_exp_mod_custom_start_end[0]})){
+#                                                            			$hash_exp_mod_custom{$key_mac} = 1;
+                                                            			&exp_mod_add($key_mac);
+                                                            			$array_number_exp_mod_custom_start_end[0]++;
+                                                            			last;
+                                                            		}
+                                                            	}
+                                                        }
+                                                }
+                    			}else{
+                    				foreach my $key_mac (sort keys %hash_number_line){
+                    					if (exists($hash_number_line{$key_mac}{$number_exp_mod_custom})){
+#                    						$hash_exp_mod_custom{$key_mac} = 1;
+                    						&exp_mod_add($key_mac);
+                    						last;
+                    					}
+                    				}
+                    			}
+                    		}
                         }when('profile_ldap_castom'){
                                 my @array_profile_ldap_castom = split(/\;/,$array_freepbx_pass[1],-1);
                                 foreach my $number_profile_ldap_castom (@array_profile_ldap_castom){
@@ -254,6 +326,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                 }
         }
 close($freepbx_pass);
+
 
 open (my $file_brand_model, '<:encoding(UTF-8)', "$dir_conf/brand_model.cfg") || die "Error opening file: brand_model.cfg $!";
 	my $brand = '';
@@ -445,6 +518,188 @@ while (my $ref = $sth_sipid->fetchrow_arrayref) {
 }
 $rc = $sth_sipid->finish;
 
+#Формируем хэш, которй содержит подписи к учеткам модуля exp.
+#$hash_exp_mod_data
+foreach my $key_mac (sort keys %hash_exp_mod){
+	my %hash_mod_num_max_key = ();
+	my %hash_mod_label_value = ();
+	my $line = 1;
+	my %hash_del = ();
+	if($hash_exp_mod{$key_mac}{'exp'} =~ /,/){
+		my @array_mod = split (/,/,$hash_exp_mod{$key_mac}{'exp'},-1);
+		foreach my $num_mod (@array_mod){
+			$num_mod =~ s/ //g;
+			my @array_mod_max = split(/:/,$num_mod,2);
+			$hash_mod_num_max_key{$array_mod_max[0]} = $array_mod_max[1];
+		}
+	}else{
+		my @array_mod_max = split(/:/,$hash_exp_mod{$key_mac}{'exp'},2);
+		$hash_mod_num_max_key{$array_mod_max[0]} = $array_mod_max[1];
+	}
+	my @array_pool = split(/-/,$hash_exp_mod{$key_mac}{'pool'},2);
+	foreach my $key_del_mod (sort keys %{$hash_exp_mod_custom{$key_mac}}){
+		foreach my $key_del_key (sort keys %{$hash_exp_mod_custom{$key_mac}{$key_del_mod}}){
+			$hash_del{$hash_exp_mod_custom{$key_mac}{$key_del_mod}{$key_del_key}{'value'}} = 1;
+		}
+	}
+	while($array_pool[0] <= $array_pool[1]){
+		foreach my $key_mac (sort keys %hash_number_line){
+			if ((exists($hash_number_line{$key_mac}{$array_pool[0]})) && (not exists $hash_del{$array_pool[0]})){
+				$hash_mod_label_value{$array_pool[0]}{'value'} = $array_pool[0];
+				$hash_mod_label_value{$array_pool[0]}{'label'} = $hash_sipid_displayname{$array_pool[0]};
+			}
+		}
+		$array_pool[0]++;
+	}
+
+	my $modul = 1;
+	my $count_key = 1;
+	while($modul < 7){
+		my $key = 1;
+		if(exists($hash_mod_num_max_key{$modul})){
+			if (exists($hash_exp_mod_custom{$key_mac})){
+				while($key <= $hash_mod_num_max_key{$modul}){
+					if(exists($hash_exp_mod_custom{$key_mac}{$modul}{$key})){
+						$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.label'} = $hash_exp_mod_custom{$key_mac}{$modul}{$key}{'label'};
+						$line++;
+						$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.line'} = $hash_exp_mod_custom{$key_mac}{$modul}{$key}{'line'};
+						$line++;
+						$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.type'} = $hash_exp_mod_custom{$key_mac}{$modul}{$key}{'type'};
+						$line++;
+						$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.value'} = $hash_exp_mod_custom{$key_mac}{$modul}{$key}{'value'};
+						$line++;
+					}else{
+						if($hash_exp_mod{$key_mac}{'fill_mode'} == 0){
+							last;
+						}elsif($hash_exp_mod{$key_mac}{'fill_mode'} == 1){
+							foreach my $key_number (sort keys %hash_mod_label_value){
+								if (exists $hash_number_line{$key_mac}{$key_number}){
+									delete($hash_mod_label_value{$key_number});
+									$key--;
+									$count_key--;
+									last;
+								}
+								my $count_key_drob = $count_key % 10;
+								my $key_drob = $hash_mod_label_value{$key_number}{'value'} % 10;
+								if ($count_key_drob == $key_drob){
+									$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.label'} = $hash_mod_label_value{$key_number}{'label'};
+									$line++;
+									$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.line'} = 1;
+									$line++;
+									$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.type'} = $hash_exp_mod{$key_mac}{'type'};
+									$line++;
+									$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.value'} = $hash_mod_label_value{$key_number}{'value'};
+									$line++;
+									delete($hash_mod_label_value{$key_number});
+									last;
+								}elsif($count_key_drob < $key_drob){
+									next;
+								}elsif($count_key_drob > $key_drob){
+									delete($hash_mod_label_value{$key_number});
+									$key--;
+									$count_key--;
+								}
+							}
+						}elsif($hash_exp_mod{$key_mac}{'fill_mode'} == 2){
+							foreach my $key_number (sort keys %hash_mod_label_value){
+								if (exists $hash_number_line{$key_mac}{$key_number}){
+									delete($hash_mod_label_value{$key_number});
+									$key--;
+									$count_key--;
+									last;
+								}
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.label'} = $hash_mod_label_value{$key_number}{'label'};
+								$line++;
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.line'} = 1;
+								$line++;
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.type'} = $hash_exp_mod{$key_mac}{'type'};
+								$line++;
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.value'} = $hash_mod_label_value{$key_number}{'value'};
+								$line++;
+								delete($hash_mod_label_value{$key_number});
+							
+								last;
+							}
+						}elsif($hash_exp_mod{$key_mac}{'fill_mode'} == 3){
+							
+						}else{
+							last;
+						}
+					}
+					$key++;
+					$count_key++;
+				}
+			}else{
+			#Здесь записать заполнение если нет кастомных настроек в файле.
+				while($key <= $hash_mod_num_max_key{$modul}){
+					if($hash_exp_mod{$key_mac}{'fill_mode'} == 0){
+						last;
+					}elsif($hash_exp_mod{$key_mac}{'fill_mode'} == 1){
+						foreach my $key_number (sort keys %hash_mod_label_value){
+							if (exists $hash_number_line{$key_mac}{$key_number}){
+								delete($hash_mod_label_value{$key_number});
+								$key--;
+								$count_key--;
+								last;
+							}
+							my $count_key_drob = $count_key % 10;
+							my $key_drob = $hash_mod_label_value{$key_number}{'value'} % 10;
+							if ($count_key_drob == $key_drob){
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.label'} = $hash_mod_label_value{$key_number}{'label'};
+								$line++;
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.line'} = 1;
+								$line++;
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.type'} = $hash_exp_mod{$key_mac}{'type'};
+								$line++;
+								$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.value'} = $hash_mod_label_value{$key_number}{'value'};
+								$line++;
+								delete($hash_mod_label_value{$key_number});
+								last;
+							}elsif($count_key_drob < $key_drob){
+								next;
+							}elsif($count_key_drob > $key_drob){
+								delete($hash_mod_label_value{$key_number});
+								$key--;
+								$count_key--;
+							}
+						}
+					}elsif($hash_exp_mod{$key_mac}{'fill_mode'} == 2){
+						foreach my $key_number (sort keys %hash_mod_label_value){
+							if (exists $hash_number_line{$key_mac}{$key_number}){
+								delete($hash_mod_label_value{$key_number});
+								$key--;
+								$count_key--;
+								last;
+							}
+							$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.label'} = $hash_mod_label_value{$key_number}{'label'};
+							$line++;
+							$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.line'} = 1;
+							$line++;
+							$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.type'} = $hash_exp_mod{$key_mac}{'type'};
+							$line++;
+							$hash_exp_mod_data{$key_mac}{$line}{'expansion_module.'."$modul".'.key.'."$key".'.value'} = $hash_mod_label_value{$key_number}{'value'};
+							$line++;
+							delete($hash_mod_label_value{$key_number});
+						
+							last;
+						}
+					}elsif($hash_exp_mod{$key_mac}{'fill_mode'} == 3){
+						
+					}else{
+						last;
+					}
+					$key++;
+					$count_key++;
+				}
+			}
+		}else{
+			last;
+		}
+		$modul++;
+	}
+
+
+}
 #print "Content-type: text/html\n\n";
 #my $dbasterisk = DBI->connect("DBI:mysql:$db:$host:$port",$user,$pass);
 #my $sth = $dbasterisk->prepare("SELECT sip.id,sip.data,userman_users.fax,userman_users.home FROM sip,userman_users where sip.id = userman_users.work AND sip.keyword = 'secret';");
@@ -698,7 +953,7 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 			close($file_profile_ldap);
 		close ($file_cfg);
 		open (my $file_cfg_local, '>:encoding(utf-8)', "$tmp_dir/${date_time_file}_${key_number_line_mac}-local.cfg") || die "Error opening file: ${date_time_file}_${key_number_line_mac}-local.cfg $!";
-#####			print $file_cfg_local "#!version:1.0.0.1\n";
+####			print $file_cfg_local "#!version:1.0.0.1\n";
 			$hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'} = 1;
 			if ((defined $hash_mac_model{${key_number_line_mac}}) && (($hash_mac_model{${key_number_line_mac}} eq 'w52') || ($hash_mac_model{${key_number_line_mac}} eq 'w56') || ($hash_mac_model{${key_number_line_mac}} eq 'w60'))){
 				foreach my $key_number_line_number(sort { $hash_number_line{$key_number_line_mac}{$a} <=> $hash_number_line{$key_number_line_mac}{$b} } keys %{$hash_number_line{$key_number_line_mac}}){
@@ -732,17 +987,17 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				$difference_in_time = ($time_now - $mtime);
 				while($size_file < 17){
-					if($s==5){
+					if($s==2){
 						open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
 							print $file_dir_log "$date_time_file_now\t${key_number_line_mac}-local.cfg\t$difference_in_time\tРазмер файла: $size_file\n";
 						close($file_dir_log);
 						last;
 					}
-					sleep 5;
+					sleep 2;
 					$s++;
 					$size_file = (-s "$dir_tftp/${key_number_line_mac}-local.cfg");
 				}
-				if($s==5){
+				if($s==2){
 					$yes_file_cfg_local = '';
 #					next;
 				}
@@ -779,7 +1034,11 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 							print $file_cfg_local "$line_cfg_local_old\n";
 						}elsif ((exists($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old})) && ($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} == 1)){
 							if ($expansion_module_start == 1){
-								&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+								if (exists($hash_exp_mod_data{$key_number_line_mac})){
+									&print_array_expansion_module_custom($file_cfg_local, $key_number_line_mac);
+								}else{
+									&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+								}
 								$expansion_module_start = 0;
 							}
 							if ($memorykey_start == 1){
@@ -811,7 +1070,11 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 									$linekey_start = 0;
 								}elsif ($expansion_module_start == 1){
 									print "!!!!!$file_cfg_local!!!!!!\n";
-									&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+									if (exists($hash_exp_mod_data{$key_number_line_mac})){
+										&print_array_expansion_module_custom($file_cfg_local, $key_number_line_mac);
+									}else{
+										&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+									}
 									$expansion_module_start = 0;
 								}
 								next;
@@ -836,7 +1099,11 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 								$number_line++;
 							}else{
 								if ($expansion_module_start == 1){
-									&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+									if (exists($hash_exp_mod_data{$key_number_line_mac})){
+										&print_array_expansion_module_custom($file_cfg_local, $key_number_line_mac);
+									}else{
+										&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+									}
 									$expansion_module_start = 0;
 								}
 								if ($memorykey_start == 1){
@@ -874,7 +1141,11 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 						}
 					}
 					if ($expansion_module_start == 1){
-						&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+						if (exists($hash_exp_mod_data{$key_number_line_mac})){
+							&print_array_expansion_module_custom($file_cfg_local, $key_number_line_mac);
+						}else{
+							&print_array_expansion_module($file_cfg_local,\%hash_expansion_module);
+						}
 						$expansion_module_start = 0;
 					}elsif ($memorykey_start == 1){
 						&print_array_memorykey($file_cfg_local,\%hash_memorykey);
@@ -1335,6 +1606,29 @@ close ($file_1);
 ##	`sudo -u root /usr/sbin/fwconsole reload`;
 ##}
 
+sub exp_mod_add{
+	my $mac_addres = shift;
+	my $puth = '/opt/asterisk/script/devices/yealink';
+	
+	print"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+	open(my $file_exp, '<:encoding(UTF-8)', "$puth/${mac_addres}-exp-mod-local.cfg") || die "Error opening file: $puth/${mac_addres}-exp-mod-local.cfg $!";
+		while (defined(my $line_file_exp = <$file_exp>)){
+		chomp ($line_file_exp);
+			if (($line_file_exp =~ /^expansion_module/) && ($line_file_exp =~ / = /)){
+				my @mas_line_file_exp = split (/ = /,$line_file_exp,2);
+				#expansion_module.1.key.1.label = Мария
+				#expansion_module.1.key.1.line = 1
+				#expansion_module.1.key.1.type = 16
+				#expansion_module.1.key.1.value = 10029
+				my @mas_line_file_exp_per = split (/\./,$mas_line_file_exp[0],-1);
+				$hash_exp_mod_custom{$mac_addres}{$mas_line_file_exp_per[1]}{$mas_line_file_exp_per[3]}{$mas_line_file_exp_per[4]} = $mas_line_file_exp[1];
+				print "$mac_addres\t $mas_line_file_exp_per[1]\t $mas_line_file_exp_per[3]\t $mas_line_file_exp_per[4] = $mas_line_file_exp[1]\n";
+			}else{
+				next;
+			}
+		}
+	close($file_exp);
+}
 
 #----------------------------------------------------
 #linekey.1.line = 1
@@ -1393,6 +1687,17 @@ sub print_array_memorykey{
 		}
 	}
 	%$hash_memorykey = ();
+}
+
+sub print_array_expansion_module_custom{
+	my $file_cfg_local = shift;
+	my $mac = shift;
+	
+	foreach my $key_numline (sort {$a <=> $b} keys %{$hash_exp_mod_data{$mac}}){
+		foreach my $key_line_expansion_module (sort keys %{$hash_exp_mod_data{$mac}{$key_numline}}){
+			print $file_cfg_local "$key_line_expansion_module = $hash_exp_mod_data{$mac}{$key_numline}{$key_line_expansion_module}\n";
+		}
+	}
 }
 
 sub print_array_expansion_module{
