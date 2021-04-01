@@ -4,7 +4,7 @@ ldap.name_filter = (&(cn=%)(pager=*)(ipPhone=*)(telephoneNumber=*)(!(userAccount
 ldap.number_filter = (&(pager=*)(ipPhone=*)(telephoneNumber=%)(!(userAccountControl=514)))
 ldap.host = "domen.local"
 ldap.port = 389
-ldap.base = dc="domen",dc=local
+ldap.base = DC="DOMEN",DC=LOCAL
 ldap.user = "user@domen.local"
 ldap.password = "password"
 ldap.max_hits = 1000

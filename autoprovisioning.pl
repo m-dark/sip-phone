@@ -941,16 +941,25 @@ foreach my $key_number_line_mac (sort keys %hash_number_line){
 				}
 			}
 			if(exists($hash_profile_ldap_castom{$key_number_line_mac})){
-				$profile_ldap_def = $hash_profile_ldap_castom{$key_number_line_mac};
-			}
-			open (my $file_profile_ldap, '<:encoding(UTF-8)', "$dir_conf/$profile_ldap_def") || die "Error opening file: $dir_conf/$profile_ldap_def $!";
-				while (defined(my $line_profile_ldap = <$file_profile_ldap>)){
-					if ($line_profile_ldap =~ /^(\#|\;)/){
-						next;
+#				$profile_ldap_def = $hash_profile_ldap_castom{$key_number_line_mac};
+				open (my $file_profile_ldap, '<:encoding(UTF-8)', "$dir_conf/$hash_profile_ldap_castom{$key_number_line_mac}") || die "Error opening file: $dir_conf/$hash_profile_ldap_castom{$key_number_line_mac} $!";
+					while (defined(my $line_profile_ldap = <$file_profile_ldap>)){
+						if ($line_profile_ldap =~ /^(\#|\;)/){
+							next;
+						}
+						print $file_cfg "$line_profile_ldap";
 					}
-					print $file_cfg "$line_profile_ldap";
-				}
-			close($file_profile_ldap);
+				close($file_profile_ldap);
+			}else{
+				open (my $file_profile_ldap, '<:encoding(UTF-8)', "$dir_conf/$profile_ldap_def") || die "Error opening file: $dir_conf/$profile_ldap_def $!";
+					while (defined(my $line_profile_ldap = <$file_profile_ldap>)){
+						if ($line_profile_ldap =~ /^(\#|\;)/){
+							next;
+						}
+						print $file_cfg "$line_profile_ldap";
+					}
+				close($file_profile_ldap);
+			}
 		close ($file_cfg);
 		open (my $file_cfg_local, '>:encoding(utf-8)', "$tmp_dir/${date_time_file}_${key_number_line_mac}-local.cfg") || die "Error opening file: ${date_time_file}_${key_number_line_mac}-local.cfg $!";
 ####			print $file_cfg_local "#!version:1.0.0.1\n";
