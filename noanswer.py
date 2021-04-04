@@ -20,6 +20,8 @@ model = ''
 call_waiting_i = []
 force_rport_yes = 0
 force_rport_model_i = []
+custom_context_default = 'from-internal'
+dict_custom_context = dict()
 
 def sql_update(keyword, data, number, model):
 	file_log=open(str(dir_conf)+'log/cisco_update.log', 'a')
@@ -31,6 +33,25 @@ def sql_update(keyword, data, number, model):
 
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
+	#custom_context
+	#custom_context = 19600-19699:governor; 19600-19699:errr
+	result_line=re.match(r'custom_context = ', line)
+	if result_line is not None:
+		param_custom_context=line.split(' = ')
+		custom_context_array=param_custom_context[1].split(':')
+		result_custom_context=re.search('-', custom_context_array[0])
+		if result_custom_context is not None:
+			param_custom_context_num=custom_context_array[0].split('-')
+			while int(param_custom_context_num[0]) <= int(param_custom_context_num[1]):
+				dict_custom_context[int(param_custom_context_num[0])] = custom_context_array[1]
+				param_custom_context_num[0]=int(param_custom_context_num[0])+1
+		else:
+			dict_custom_context[int(custom_context_array[0])] = custom_context_array[1]
+
+	result_line=re.match(r'custom_context_default = ', line)
+	if result_line is not None:
+		param_custom_context_default=line.split(' = ')
+		custom_context_default=param_custom_context_default[1]
 	result_line=re.match(r'fixedcid = \d+', line)
 	if result_line is not None:
 		param_fixedcid=line.split(' = ')
@@ -390,6 +411,28 @@ elif aggregate_mwi == "2":
 			cursor.execute(upd_sql)
 			db.commit()
 			restart=1
+
+#Прописываем Custom Context
+#custom_context_default = all-allow-except-196XX
+#custom_context = 19600-19699:governor
+sql="SELECT sip.id, sip.keyword, sip.data, sip.flags FROM users, sip WHERE users.extension = sip.id AND sip.keyword = 'context'"
+cursor.execute(sql)
+for row in cursor:
+	if dict_custom_context.get(int(row[0])) is None:
+		if row[2] != custom_context_default:
+##			print('Надо заменить'+row[0]+"\t"+row[2]+'!'+custom_context_default)
+			upd_sql="""UPDATE sip SET data='%(custom_context_default)s', flags='45' WHERE id='%(num)s' AND keyword='context'"""%{"custom_context_default":custom_context_default, "num":row[0]}
+			cursor.execute(upd_sql)
+			db.commit()
+			restart=1
+	else:
+		if row[2] != dict_custom_context[int(row[0])]:
+##			print('!!Надо заменить'+row[0]+"\t"+row[2])
+			upd_sql="""UPDATE sip SET data='%(custom_context)s', flags='45' WHERE id='%(num)s' AND keyword='context'"""%{"custom_context":dict_custom_context[int(row[0])], "num":row[0]}
+			cursor.execute(upd_sql)
+			db.commit()
+			restart=1
+	db.commit()
 
 #Reload check
 sql="SELECT `value` FROM admin WHERE `variable`='need_reload'"
