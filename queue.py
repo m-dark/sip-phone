@@ -81,8 +81,8 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 			queue_number_no_mess_push_i.append(queue_number_no_mess_push_1)
 freepbx_pass.close()
 
-time.sleep(4)
-log.error('Информация по вызову с ID: '+str(sys.argv[1])+' Номер: '+str(sys.argv[2]))
+time.sleep(6)
+log.info('Информация по вызову с ID: '+str(sys.argv[1])+' Номер: '+str(sys.argv[2]))
 db = pymysql.connect(host="localhost", user="root", passwd="", db=queue_db, charset='utf8')
 cursor = db.cursor()
 cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, linkedid, 'ANSWERED', linkedid, linkedid, 'ANSWERED'))
