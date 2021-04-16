@@ -255,19 +255,21 @@ cursor.close()
 asteriskcdrdb.close()
 
 for key_trunk in info_extension_price_p:
-	print("\n"+'========================================================================================'+"\n"+'Транк: '+key_trunk)
+	print("\n"+'======================================================================================================================='+"\n"+'Транк: '+key_trunk)
 	for key_direction in info_extension_price_p[key_trunk]:
-		print('========================================================================================'+"\n"+'Направление: '+key_direction+"\n"+'----------------------------------------------------------------------------------------')
+		print('======================================================================================================================='+"\n"+'Направление: '+key_direction+"\n")
+		print('|  Префикс  | Вн.номер |                   Направление                    | Количество вызовов | Всего миенут | Всего рублей |')
+		print('-----------------------------------------------------------------------------------------------------------------------------')
 		for key_pref in sorted(info_extension_price_p[key_trunk][key_direction].items(), key=lambda x:x[1], reverse=True):
-			print("%-11s %-50s %-8s %-10s %-10s" % (key_pref[0],str(info_extension_price[key_trunk][key_direction][key_pref[0]]['city']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['counter']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['minut']),str(round(key_pref[1], 1))))
+			print("%-1s %-21s %-50s %-21s %-15s %-14s" % ('|',key_pref[0],str(info_extension_price[key_trunk][key_direction][key_pref[0]]['city']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['counter']),str(info_extension_price[key_trunk][key_direction][key_pref[0]]['minut']),str(round(key_pref[1], 1))))
 			if info_all_extension_price[key_trunk][key_direction].get(key_pref[0]) is not None:
 				for key_extension_number in sorted(info_all_extension_price[key_trunk][key_direction][str(key_pref[0])].items(), key=lambda x:x[1], reverse=True):
-					print("%-4s %-55s %-8s %-10s %-10s" % ('    |_',key_extension_number[0],str(info_all_extension[key_trunk][key_direction][key_pref[0]][key_extension_number[0]]['counter']),str(info_all_extension[key_trunk][key_direction][key_pref[0]][key_extension_number[0]]['minut']),str(round(key_extension_number[1], 1))))
+					print("%-6s %-59s %-21s %-15s %-14s" % ('|           |_',key_extension_number[0],str(info_all_extension[key_trunk][key_direction][key_pref[0]][key_extension_number[0]]['counter']),str(info_all_extension[key_trunk][key_direction][key_pref[0]][key_extension_number[0]]['minut']),str(round(key_extension_number[1], 1))))
 			else:
 				continue
-print("\n"+'===================================================================')
-print('|Номер | Попыток| Минут    | Рублей|')
-print('-----------------------------------')
+print("\n"+'=============================================================================================================================')
+print('|Номер | Попыток | Минут    | Рублей|')
+print('------------------------------------')
 for number_price in sorted(extension_price.items(), key=lambda x:x[1], reverse=True):
-	print("%-8s %-8s %-10s %-10s" % (str(number_price[0]),extension_counter[number_price[0]],extension_minutes[number_price[0]],str(round(number_price[1]))))
-print("\n"+'===================================================================')
+	print("%-9s %-9s %-10s %-10s" % (str(number_price[0]),extension_counter[number_price[0]],extension_minutes[number_price[0]],str(round(number_price[1]))))
+print("\n"+'=============================================================================================================================')
