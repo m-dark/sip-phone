@@ -10,7 +10,7 @@ import subprocess
 from datetime import datetime
 date_time = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
 dir_conf = '/opt/asterisk/script/autoprovisioning/'
-dir_log = '/opt/asterisk/script/log'
+dir_log = '/opt/asterisk/script/log/'
 
 fixedcid_def = ''
 fw_auto = 0
