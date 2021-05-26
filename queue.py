@@ -82,10 +82,18 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 freepbx_pass.close()
 
 time.sleep(6)
-log.info('Информация по вызову с ID: '+str(sys.argv[1])+' Номер: '+str(sys.argv[2]))
+log.info('1 Информация по вызову с ID: '+str(sys.argv[1])+' Номер: '+str(sys.argv[2]))
 db = pymysql.connect(host="localhost", user="root", passwd="", db=queue_db, charset='utf8')
 cursor = db.cursor()
-cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, linkedid, 'ANSWERED', linkedid, linkedid, 'ANSWERED'))
+#cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[1][0][0]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
+cursor.execute("SELECT calldate, dst, src, billsec, lastdata, dstchannel FROM cdr WHERE ((dst REGEXP '^[1][0][0]+') AND ((uniqueid = %s) AND (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal') AND (dstchannel NOT REGEXP '^Local/')) OR ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) AND (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/') AND (dstchannel NOT REGEXP '^Local/'))", (linkedid, linkedid, 'ANSWERED', linkedid, linkedid, 'ANSWERED'))
+#2021.04.26 cursor.execute("SELECT calldate, dst, src, billsec, lastdata, dstchannel FROM cdr WHERE ((dst REGEXP '^[1][0][0]+') AND (linkedid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal') AND (dstchannel NOT REGEXP '^Local/')) OR ((dst REGEXP '^[0-9]+') AND (linkedid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/') AND (dstchannel NOT REGEXP '^Local/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
+####cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[1][0][0]+') AND (linkedid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal') AND (dstchannel NOT REGEXP '^Local/FM')) OR ((dst REGEXP '^[0-9]+') AND (linkedid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/') AND (dstchannel NOT REGEXP '^Local/FM'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
+
+#cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[1][0][0]+') AND (linkedid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND (linkedid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
+
+#cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[1][0][0]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, linkedid, 'ANSWERED', linkedid, linkedid, 'ANSWERED'))
+#cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND ((uniqueid = %s) OR (linkedid = %s)) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, linkedid, 'ANSWERED', linkedid, linkedid, 'ANSWERED'))
 #cursor.execute("SELECT calldate, dst, src, billsec, lastdata FROM cdr WHERE ((dst REGEXP '^[0-9]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext != 'from-internal')) OR ((dst REGEXP '^[0-9]+') AND (uniqueid = %s) AND (disposition = %s) AND (billsec != '0') AND (dcontext = 'from-internal') AND (channel NOT REGEXP '^PJSIP/'))", (linkedid, 'ANSWERED', linkedid, 'ANSWERED'))
 #cursor.execute("SELECT calldate, dst, src, billsec FROM cdr WHERE (uniqueid = %s) AND (disposition = %s) AND (billsec != '0')", (linkedid, 'ANSWERED'))
 for row in cursor:
@@ -96,6 +104,13 @@ for row in cursor:
 		param=row[4].split('@')
 		number_local=param[0].split('-')
 		number_b_transfer = number_local[1]
+
+	result=re.match(r'PJSIP/', row[4])
+	if result is not None:
+		param=row[4].split('@')
+		number_local=param[0].split(':')
+		number_b_transfer = number_local[1]
+
 	result=re.match(r'SIP/', row[4])
 	if result is not None:
 		param=row[4].split(',')
@@ -142,11 +157,11 @@ for number_b in job:
 			response = request.urlopen(url=URL, data=post_data)
 			print(response.read().decode("utf-8"))
 			print(response.code)
-			log.info('Номер входящего маршрута: '+sys.argv[2]+' ID вызова: '+sys.argv[1]+' номер A: '+job[number_b]['src']+' номер B: '+number_b+' продолжительность разговора: '+str(job[number_b]['billsec'])+' сек.')
+			log.info('1 Номер входящего маршрута: '+sys.argv[2]+' ID вызова: '+sys.argv[1]+' номер A: '+job[number_b]['src']+' номер B: '+number_b+' продолжительность разговора: '+str(job[number_b]['billsec'])+' сек.')
 		except Exception:
 			print("Error occuried during web request!")
 			print(sys.exc_info()[1])
-			log.error('Информация по вызову с ID: '+str(sys.argv[1])+' не отправлена, так как '+URL+' вернул ошибку: '+str(sys.exc_info()[1]))
+			log.error('1 Информация по вызову с ID: '+str(sys.argv[1])+' не отправлена, так как '+URL+' вернул ошибку: '+str(sys.exc_info()[1]))
 			sys.exit()
 cursor.close()
 db.close()

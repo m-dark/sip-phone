@@ -32,6 +32,9 @@ user_email = test@test.ru
 user_email_phonebook = test@test.ru
 
 # Данные для скрипта noanswer.py
+#ad_delete_extension - Если в AD удалили номер. (0-не удаляем его с FreePBX, 1-удаляем его с FreePBX)
+ad_delete_extension = 0
+
 # Номер телефона по умолчанию, для внутренних телефонов при включенном FollowME
 fixedcid = 3573097
 fw_auto = 1
