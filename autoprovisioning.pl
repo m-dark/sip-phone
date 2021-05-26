@@ -10,6 +10,8 @@ use Time::Local;
 use encoding 'utf-8';
 #yum install perl-XML-SAX
 #yum install perl-XML-Parser
+#yum install cpan
+#cpan install XML::Simple
 use XML::Simple;
 use Data::Dumper;
 #use Date::Dumper qw(Dumper);
@@ -753,7 +755,7 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 				print "Error_7, В mac-адресе $$ref[2] присутствует русская буква!\n";
 			}
 			if (exists($hash_mac_model{"\L$mac_adr"})){
-				if (($hash_mac_model{"\L$mac_adr"} ne "$$ref[3]") && ("$$ref[3]" ne '')){
+				if (($hash_mac_model{"\L$mac_adr"} ne "\L$$ref[3]") && ("$$ref[3]" ne '')){
 					print "ERROR_2: За mac-адресом \L$mac_adr уже прописана модель $hash_mac_model{\"\L$mac_adr\"}, а вы пытаетесь прописать за ним новую модель $$ref[3], на учетке с номером $$ref[0]\n";
 					next;
 				}else{
