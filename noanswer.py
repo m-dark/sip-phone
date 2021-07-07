@@ -25,6 +25,7 @@ force_rport_model_i = []
 custom_context_default = 'from-internal'
 dict_custom_context = dict()
 ad_delete_extension = 0
+dict_no_delete_extension = dict()
 
 def sql_update(keyword, data, number, model):
 	file_log=open(str(dir_log)+'cisco_update.log', 'a')
@@ -63,6 +64,22 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	if result_line is not None:
 		param_ad_delete_extension=line.split(' = ')
 		ad_delete_extension=param_ad_delete_extension[1]
+		
+	result_line=re.match(r'no_delete_extension = \d', line)
+	if result_line is not None:
+		param_no_delete_extension=line.split(' = ')
+		numper_no_delete_extension=param_no_delete_extension[1].split(',')
+		for number in numper_no_delete_extension:
+			result_line=re.search(r'-', number)
+			if result_line is not None:
+				start_end_number=number.split('-')
+				if int(start_end_number[0]) < int(start_end_number[1]):
+					while int(start_end_number[0]) <= int(start_end_number[1]):
+						dict_no_delete_extension[int(start_end_number[0])] = 1
+						start_end_number[0] = int(start_end_number[0]) + 1
+			else:
+				dict_no_delete_extension[int(number)] = 1
+
 	result_line=re.match(r'fw_auto = \d', line)
 	if result_line is not None:
 		param_fw_auto=line.split(' = ')
@@ -173,17 +190,28 @@ if ad_delete_extension == "1":
 		if result is not None:
 			print("Номер не удаляем: "+row[0])
 		else:
-			print(row[0])
-			file_log=open(str(dir_log)+'ad_delete.log', 'a')
-			file_log.write(str(date_time + "\t" + 'Был удалён номер ' + row[0] + ' с FreePBX, так как он был удален в AD'+"\n"))
-			file_log.close()
-			del_sip_ad_delete_extension_sql="""DELETE FROM sip WHERE `id`='%(extension)s'"""%{"extension":row[0]}
-			cursor.execute(del_sip_ad_delete_extension_sql)
-			del_ad_delete_extension_sql="""DELETE FROM users WHERE `extension`='%(extension)s'"""%{"extension":row[0]}
-			cursor.execute(del_ad_delete_extension_sql)
-			del_fw_ad_delete_extension_sql="""DELETE FROM findmefollow WHERE `grpnum`='%(extension)s'"""%{"extension":row[0]}
-			cursor.execute(del_fw_ad_delete_extension_sql)
-			restart=1
+			if int(row[0]) in dict_no_delete_extension:
+				print('Номер '+str(row[0])+' нельзя удалять, так как он прописан в файле freepbx.pass')
+			else:
+				print(row[0])
+				file_log=open(str(dir_log)+'ad_delete.log', 'a')
+				file_log.write(str(date_time + "\t" + 'Был удалён номер ' + row[0] + ' с FreePBX, так как он был удален в AD'+"\n"))
+				file_log.close()
+				del_sip_ad_delete_extension_sql="""DELETE FROM sip WHERE `id`='%(extension)s'"""%{"extension":row[0]}
+				cursor.execute(del_sip_ad_delete_extension_sql)
+				del_ad_delete_extension_sql="""DELETE FROM users WHERE `extension`='%(extension)s'"""%{"extension":row[0]}
+				cursor.execute(del_ad_delete_extension_sql)
+				del_fw_ad_delete_extension_sql="""DELETE FROM findmefollow WHERE `grpnum`='%(extension)s'"""%{"extension":row[0]}
+				cursor.execute(del_fw_ad_delete_extension_sql)
+				del_devices_ad_delete_extension_sql="""DELETE FROM devices WHERE `id`='%(extension)s'"""%{"extension":row[0]}
+				cursor.execute(del_devices_ad_delete_extension_sql)
+				restart=1
+				subprocess.check_output('/usr/sbin/rasterisk -x "database deltree AMPUSER/'+row[0]+'"',shell=True,universal_newlines=True)
+				subprocess.check_output('/usr/sbin/rasterisk -x "database deltree DEVICE/'+row[0]+'"',shell=True,universal_newlines=True)
+				subprocess.check_output('/usr/sbin/rasterisk -x "database deltree CALLTRACE/'+row[0]+'"',shell=True,universal_newlines=True)
+				subprocess.check_output('/usr/sbin/rasterisk -x "database deltree CW/'+row[0]+'"',shell=True,universal_newlines=True)
+				subprocess.check_output('/usr/sbin/rasterisk -x "database deltree CustomDevstate/FOLLOWME'+row[0]+'"',shell=True,universal_newlines=True)
+				subprocess.check_output('/usr/sbin/rasterisk -x "database deltree CustomPresence/'+row[0]+'"',shell=True,universal_newlines=True)
 	db.commit()
 
 #FW
