@@ -136,7 +136,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                         }when('local_cfg'){
                                 my @array_local_cfg = split(/\;/,$array_freepbx_pass[1],-1);
                                 foreach my $number_local_cfg (@array_local_cfg){
-                                        my @array_number_local_cfg = split (/:/,$number_local_cfg,2);
+                                        my @array_number_local_cfg = split (/\|/,$number_local_cfg,2);
                                         $array_number_local_cfg[0] =~ s/ //g;
                                         my @array_number_local_cfg_mac = split(/ = /,$array_number_local_cfg[1],2);
                                         if ($array_number_local_cfg[0] =~ /-/){
@@ -175,7 +175,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                         }when('mac_cfg'){
                                 my @array_cfg = split(/\;/,$array_freepbx_pass[1],-1);
                                 foreach my $number_cfg (@array_cfg){
-                                        my @array_number_cfg = split (/:/,$number_cfg,2);
+                                        my @array_number_cfg = split (/\|/,$number_cfg,2);
                                         $array_number_cfg[0] =~ s/ //g;
                                         my @array_number_cfg_mac = split(/ = /,$array_number_cfg[1],2);
                                         if ($array_number_cfg[0] =~ /-/){
