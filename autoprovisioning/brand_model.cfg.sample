@@ -10,7 +10,10 @@ cp930w
 cp960
 t18
 t19
+t19p
 t19_e2
+t19p_e2
+t19pe2
 t20
 t20p
 t21
@@ -20,6 +23,7 @@ t21_e2
 t21pe2
 t21p_e2
 t22
+t22p
 t23
 t23g
 t23p
@@ -28,6 +32,8 @@ t26p
 t27
 t27g
 t27p
+t28
+t28p
 t29
 t29g
 t30
@@ -36,9 +42,11 @@ t31
 t31g
 t31p
 t32
+t32g
 t33g
 t33p
 t38
+t38g
 t40
 t40g
 t40p
@@ -104,3 +112,16 @@ w60
 8961
 9951
 9971
+
+[qtech]
+qipp-100
+qipp-100p
+qipp-300pg
+qipp-400p
+qipp-400pg
+qipp-500pg
+qipp-v600pg
+qipp-v700pg
+qipp-800pg
+qipp-1000pg
+qipp-pwr5v
