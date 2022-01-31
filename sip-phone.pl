@@ -28,7 +28,7 @@ use encoding 'utf-8';
 my $date_time_file_now = '';
 my $difference_in_time = '';
 my $key_number_line_mac_2 = '';
-my $dir = '/autoconfig';							#Директория для файлов .boot и .cfg
+my $dir = '/autoconfig_old';							#Директория для файлов .boot и .cfg
 my $dir_conf = '/opt/asterisk/script';						#Директория для файла conf_number_line.conf (который содержит информацию о том, за каким номером аккаунта прописан номер телефона).
 my $dir_log = '/opt/asterisk/script/log';					#Журналы
 my %hash_mac_model = ();							#Хэш mac-адресов с версией модели Yealinka. (Для проверки корректно внесенной информации о модели sip-телефона на разных учетках AD).
@@ -364,7 +364,7 @@ foreach my $key_namedgroup (sort keys %hash_namedgroup){
 my $sth_sipid = $dbasterisk->prepare("SELECT sip.id,displayname FROM sip,userman_users where sip.id = userman_users.work AND sip.keyword = 'secret';");
 $sth_sipid->execute; # исполняем запрос
 while (my $ref = $sth_sipid->fetchrow_arrayref) {
-	if ($$ref[1] =~ /^[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+$/){
+	if ($$ref[1] =~ /^[А-Я][а-я]+\s[А-Я][а-я]+\s[А-Я][а-я]+$/){
 		my @array_fio = split (/ /,$$ref[1],-1);
 		my $name = substr($array_fio[1],0,1);
 		my $otc = substr($array_fio[2],0,1);
@@ -372,7 +372,7 @@ while (my $ref = $sth_sipid->fetchrow_arrayref) {
 		$hash_sipid_displayname{$$ref[0]} = "$array_fio[0] $name\.$otc\.";
 	}elsif($$ref[1] =~ /^kas$/){
 		$hash_sipid_displayname{$$ref[0]} = 'Кранштапов А.C.';
-	}elsif ($$ref[1] =~ /^[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+\s\d+$/){
+	}elsif ($$ref[1] =~ /^[А-Я][а-я]+\s[А-Я][а-я]+\s[А-Я][а-я]+\s\d+$/){
 		my @array_fio = split (/ /,$$ref[1],-1);
 		my $name = substr($array_fio[1],0,1);
 		my $otc = substr($array_fio[2],0,1);
@@ -427,7 +427,7 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
 		}
 #		print "$$ref[0]\t$$ref[1]\t$$ref[2]\t$$ref[3]\t$$ref[4]\n";
 		if (defined ($$ref[2] && $$ref[3])){
-			if($$ref[2] =~ /[а-яёА-ЯЁ]/){
+			if($$ref[2] =~ /[а-яА-Я]/){
 				print "Error_7, В mac-адресе $$ref[2] присутствует русская буква!\n";
 			}
 			if (exists($hash_mac_model{"\L$$ref[2]"})){
@@ -618,7 +618,6 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				$mtime = (stat("$dir/${key_number_line_mac}-local.cfg"))[9];
 				$size_file = (-s "$dir/${key_number_line_mac}-local.cfg");
 				$difference_in_time = ($time_now - $mtime);
-				print ("$key_number_line_mac\t1=$difference_in_time\t2=$time_now \t3=$mtime\n");
 				while($size_file < 17){
 					if($s==10){
 						open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";

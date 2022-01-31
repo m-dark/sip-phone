@@ -5,18 +5,17 @@ account.0.auth_name =
 account.0.user_name = 
 account.0.password = 
 
-account.0.sip_server.1.address = 10.0.16.69
+account.0.sip_server.1.address = 10.0.16.70
 account.0.sip_server.1.port = 5061
 account.0.sip_server.1.expires = 180
 account.0.sip_server.1.register_on_enable = 1
+account.0.unregister_on_reboot = 1
+account.0.subscribe_register = 1
 
 account.0.sip_server.1.transport_type = 2
 account.0.transport_legacy = 2
 account.0.srtp_auth_tag_mode = 2
 account.0.srtp_encryption = 2
-
-account.0.unregister_on_reboot = 1
-account.0.subscribe_register = 1
 
 account.0.codec.2.enable = 1
 account.0.codec.2.payload_type = PCMA
