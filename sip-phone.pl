@@ -618,6 +618,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
 				$mtime = (stat("$dir/${key_number_line_mac}-local.cfg"))[9];
 				$size_file = (-s "$dir/${key_number_line_mac}-local.cfg");
 				$difference_in_time = ($time_now - $mtime);
+				print ("$key_number_line_mac\t1=$difference_in_time\t2=$time_now \t3=$mtime\n");
 				while($size_file < 17){
 					if($s==10){
 						open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
