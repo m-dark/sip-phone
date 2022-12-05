@@ -20,6 +20,7 @@ secret = 0
 secret_cisco_model_i = []
 model = ''
 call_waiting_i = []
+recording_i = []
 force_rport_yes = 0
 force_rport_model_i = []
 custom_context_default = 'from-internal'
@@ -123,6 +124,15 @@ for line in (line.rstrip() for line in freepbx_pass.readlines()):
 			call_waiting_i=call_waiting_invisible.split(',')
 		else:
 			call_waiting_i.append(call_waiting_invisible)
+	result_line=re.match(r'recording = \d+', line)
+	if result_line is not None:
+		param_recording=line.split(' = ')
+		recording=param_recording[1]
+		result_line=re.match(r'\d+,', recording)
+		if result_line is not None:
+			recording_i=recording.split(',')
+		else:
+			recording_i.append(recording)
 	result_line=re.match(r'aggregate_mwi = \d', line)
 	if result_line is not None:
 		param_aggregate_mwi=line.split(' = ')
@@ -415,17 +425,147 @@ for row in cursor:
 
 #Record check
 #
+#recording_i
 sql="SELECT extension from users"
 cursor.execute(sql)
 for row in cursor:
-	get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/in external"'
-	force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
-	force_val=force.stdout.read()
-	if force_val[7:12] != "force":
-		restart=1
-		subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/external force"',shell=True)
-		subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/out/external force"',shell=True)
-		subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/internal force"',shell=True)
+	not_recording = 0
+	for number_recording in recording_i:
+		if row[0] == number_recording:
+			not_recording = 1
+	if not_recording == 1:
+		print(number_recording)
+#Контроль внешних входящих соединений
+#		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/in external"'
+#		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+#		force_val=force.stdout.read()
+#		if force_val[7:12] != "never":
+#			restart=1
+#			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/external never"',shell=True)
+#			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+#			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внешних входящих соединений переключили в состояние never'+"\n"))
+#			file_log_no_recording.close()
+
+#Контроль внешних исходящих соединений
+#		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/out external"'
+#		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+#		force_val=force.stdout.read()
+#		if force_val[7:12] != "never":
+#			restart=1
+#			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/out/external never"',shell=True)
+#			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+#			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внешних исходящих соединений переключили в состояние never'+"\n"))
+#			file_log_no_recording.close()
+
+#Контроль внутренних входящих соединений
+#		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/in internal"'
+#		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+#		force_val=force.stdout.read()
+#		if force_val[7:12] != "never":
+#			restart=1
+#			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/internal never"',shell=True)
+#			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+#			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внутренних входящих соединений переключили в состояние never'+"\n"))
+#			file_log_no_recording.close()
+
+#Контроль внутренних исходящих соединений
+#		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/out internal"'
+#		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+#		force_val=force.stdout.read()
+#		if force_val[7:12] != "never":
+#			restart=1
+#			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/out/internal never"',shell=True)
+#			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+#			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внутренних исходящих соединений переключили в состояние never'+"\n"))
+#			file_log_no_recording.close()
+
+#Запись разговоров с телефона через *1
+#		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording ondemand"'
+#		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+#		force_val=force.stdout.read()
+#		if force_val[7:15] != "override":
+#			restart=1
+#			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/ondemand override"',shell=True)
+#			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+#			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' возможность включать выключать запись разговора через *1 переключили в состояние override'+"\n"))
+#			file_log_no_recording.close()
+
+#Приоритет политики использования записи разговоров
+#		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording priority"'
+#		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+#		force_val=force.stdout.read()
+#		if force_val[7:9] != "10":
+#			restart=1
+#			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/priority 10"',shell=True)
+#			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+#			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' Приоритет политики использования записи разговоров переключили в 10'+"\n"))
+#			file_log_no_recording.close()
+	else:
+#Контроль внешних входящих соединений
+		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/in external"'
+		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+		force_val=force.stdout.read()
+		if force_val[7:12] != "force":
+			restart=1
+			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/external force"',shell=True)
+			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внешних входящих соединений переключили в состояние force'+"\n"))
+			file_log_no_recording.close()
+
+#Контроль внешних исходящих соединений
+		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/out external"'
+		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+		force_val=force.stdout.read()
+		if force_val[7:12] != "force":
+			restart=1
+			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/out/external force"',shell=True)
+			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внешних исходящих соединений переключили в состояние force'+"\n"))
+			file_log_no_recording.close()
+
+#Контроль внутренних входящих соединений
+		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/in internal"'
+		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+		force_val=force.stdout.read()
+		if force_val[7:12] != "force":
+			restart=1
+			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/in/internal force"',shell=True)
+			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внутренних входящих соединений переключили в состояние force'+"\n"))
+			file_log_no_recording.close()
+
+#Контроль внутренних исходящих соединений
+		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording/out internal"'
+		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+		force_val=force.stdout.read()
+		if force_val[7:15] != "dontcare":
+			restart=1
+			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/out/internal dontcare"',shell=True)
+			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' запись разговоров внутренних исходящих соединений переключили в состояние dontcare'+"\n"))
+			file_log_no_recording.close()
+
+#Запись разговоров с телефона через *1
+		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording ondemand"'
+		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+		force_val=force.stdout.read()
+		if force_val[7:15] != "disabled":
+			restart=1
+			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/ondemand disabled"',shell=True)
+			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' возможность включать выключать запись разговора через *1 переключили в состояние disabled'+"\n"))
+			file_log_no_recording.close()
+
+#Приоритет политики использования записи разговоров
+		get_str='/usr/sbin/rasterisk -x "database get AMPUSER/'+row[0]+'/recording priority"'
+		force=subprocess.Popen(get_str, shell=True, stdout=subprocess.PIPE)
+		force_val=force.stdout.read()
+		if force_val[7:9] != "10":
+			restart=1
+			subprocess.call('/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/recording/priority 10"',shell=True)
+			file_log_no_recording=open(str(dir_log)+'no_recording.log', 'a')
+			file_log_no_recording.write(str(date_time+"\t"+'На номере '+row[0]+' Приоритет политики использования записи разговоров переключили в 10'+"\n"))
+			file_log_no_recording.close()
 
 #Check hung pjsip channels
 check_calls=subprocess.check_output('/usr/sbin/rasterisk -x "pjsip show channels"',shell=True,universal_newlines=True)
