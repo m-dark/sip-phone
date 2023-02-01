@@ -3,6 +3,9 @@
 import sys
 import os
 import re
+import smtplib
+import email.message
+server = smtplib.SMTP('smtp.gmail.com:587')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 import MySQLdb
@@ -27,6 +30,8 @@ custom_context_default = 'from-internal'
 dict_custom_context = dict()
 ad_delete_extension = 0
 dict_no_delete_extension = dict()
+passwordemailreport = ''
+sendto = ''
 
 def sql_update(keyword, data, number, model):
 	file_log=open(str(dir_log)+'cisco_update.log', 'a')
@@ -40,6 +45,14 @@ freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	#custom_context
 	#custom_context = 19600-19699:governor; 19600-19699:errr
+	result_line=re.match(r'passwordemailreport = ', line)
+	if result_line is not None:
+		param_passwordemailreport=line.split(' = ')
+		passwordemailreport=param_passwordemailreport[1]
+	result_line=re.match(r'sendto = ', line)
+	if result_line is not None:
+		param_sendto=line.split(' = ')
+		sendto=param_sendto[1]
 	result_line=re.match(r'custom_context = ', line)
 	if result_line is not None:
 		param_custom_context=line.split(' = ')
@@ -142,7 +155,9 @@ freepbx_pass.close()
 list_ring_strategy = ['ringallv2','ringallv2-prim','ringall','ringall-prim','hunt','hunt-prim','memoryhunt-prim','firstavailable','firstnotonphone']
 db = MySQLdb.connect(host="localhost", user="root", passwd="", db="asterisk", charset='utf8')
 cursor = db.cursor()
-restart=0
+restart = 0
+sendmail = 0
+email_content2 = ''
 
 #Если = 1, то на номерах которые создаются на FreePBX и не прописаны в файле freepbx.pass в переменной call_waiting_invisible= включется фишка: "Оставайтесь на линии абонент занят" (предварительно необходимо еще дополнительное назначение my-call-hold)
 if call_waiting_yes == '1':
@@ -227,11 +242,13 @@ if ad_delete_extension == "1":
 #FW
 #
 if fw_auto == "1":
-	sql="SELECT default_extension,cell from userman_users WHERE `cell` !='' AND `default_extension` !='none'"
+	sql="SELECT default_extension,cell,displayname from userman_users WHERE `cell` !='' AND `default_extension` !='none' ORDER BY default_extension"
 	cursor.execute(sql)
 	for row in cursor:
 		result=re.match(r"^(\d+(-\d+)*),\d{1,2}\,\d{1,2}\,\d{1,2}(\,\d{6,11})*", row[1])
 		if result is not None:
+			email_content2 = email_content2 + "<tr><td>"+row[0]+"</td><td>"+row[1]+"</td><td>"+row[2]+"</td></tr>"
+
 #			print result.group(0)
 			text=result.group(0)
 			list_param=text.split(',')
@@ -287,6 +304,7 @@ if fw_auto == "1":
 						cursor.execute(upd_sql)
 						db.commit()
 						restart=1
+						sendmail=1
 			else:
 				grplist=''
 				for row_number in list_number:
@@ -319,6 +337,7 @@ if fw_auto == "1":
 				cursor.execute(ins_sql)
 				db.commit()
 				restart=1
+				sendmail=1
 		else:
 			print('У номера '+row[0]+' ошибка в строке '+row[1]);
 # Off fw
@@ -328,6 +347,7 @@ if fw_auto == "1":
 	for row in cursor:
 		if row[0]!='':
 			restart=1
+			sendmail=1
 		file_log_followme=open(str(dir_log)+'followme.log', 'a')
 		file_log_followme.write(str(date_time+"\t"+'В AD у номера '+row[0]+' удалили переадресацию'+"\n"))
 		file_log_followme.close()
@@ -343,6 +363,90 @@ if fw_auto == "1":
 		subprocess.call(upd_indb2, shell=True)
 		subprocess.call(upd_indb3, shell=True)
 #FW end
+	if sendmail == 1:
+		email_content1 = """
+<html>
+
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+
+<title>Отчет по номерам с настроенной переадресацией</title> 
+<style type="text/css"> 
+a {color: #d80a3e;} 
+body, #header h1, #header h2, p {margin: 0; padding: 0;} 
+#main {border: 1px solid #cfcece;} 
+img {display: block;} 
+#top-message p, #bottom p {color: #3f4042; font-size: 12px; font-family: Arial, Helvetica, sans-serif; } 
+#header h1 {color: #ffffff !important; font-family: "Lucida Grande", sans-serif; font-size: 24px; margin-bottom: 0!important; padding-bottom: 0; } 
+#header p {color: #ffffff !important; font-family: "Lucida Grande", "Lucida Sans", "Lucida Sans Unicode", sans-serif; font-size: 12px; } 
+h5 {margin: 0 0 0.8em 0;} 
+h5 {font-size: 18px; color: #444444 !important; font-family: Arial, Helvetica, sans-serif; } 
+p {font-size: 12px; color: #444444 !important; font-family: "Lucida Grande", "Lucida Sans", "Lucida Sans Unicode", sans-serif; line-height: 1.5;} 
+</style> 
+</head> 
+
+<body> 
+
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="e4e4e4">
+<tr>
+<td> 
+    <table id="main" width="800" align="center" cellpadding="0" cellspacing="15" bgcolor="ffffff"> 
+	<tr> 
+	    <td> 
+		<table id="header" cellpadding="10" cellspacing="0" align="center" bgcolor="8fb3e9"> 
+		    <tr> 
+			<td width="570" align="center" bgcolor="#d80a3e"><h1>Переадресация настроена на номерах:</h1></td> 
+		    </tr> 
+		</table> 
+	    </td> 
+	</tr> 
+
+	<tr> 
+	    <td> 
+		<table id="content-4" cellpadding="0" cellspacing="0" align="center" border="1px" solid="#cfcece"> 
+		<thead>
+		    <tr>
+			<th width="140">Внутренний номер </th>
+			<th width="200">Правило переадресации </th>
+			<th width="240">Сотрудник </th>
+		    </tr>
+		</thead>
+"""
+#		email_content2 = """
+#		    <tr>
+#			<td>666</td>
+#			<td>9999999999999999</td>
+#			<td>kas</td>
+#		    </tr>
+#		    <tr>
+#			<td>666</td>
+#			<td>9999999999999999,34, 343 34</td>
+#			<td>Павлеченко Ефстигней Макарович</td>
+#		    </tr>
+#"""
+		email_content3 = """
+		</table> 
+	    </td> 
+	</tr> 
+</table> 
+</td></tr></table><!-- wrapper --> 
+
+</body> 
+</html>
+"""
+
+		email_content = email_content1 + email_content2 + email_content3
+		msg = email.message.Message()
+		msg['Subject'] = 'Отчет по номерам с настроенной переадресацией'
+		msg['From'] = 'report.freepbx@gmail.com'
+		msg['To'] = sendto
+		msg.add_header('Content-Type', 'text/html')
+		msg.set_payload(email_content)
+		s = smtplib.SMTP('smtp.gmail.com: 587')
+		s.starttls()
+		# Login Credentials for sending the mail 
+		s.login(msg['From'], passwordemailreport)
+		s.sendmail(msg['From'], [msg['To']], msg.as_string())
 
 #Меняем пароль для sip-учетки номера (например cisco 7911 не переваривает пароль длинее 31, а во FreePBX длина по умолчанию 32)
 #Update password sip
