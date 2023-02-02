@@ -32,6 +32,8 @@ ad_delete_extension = 0
 dict_no_delete_extension = dict()
 passwordemailreport = ''
 sendto = ''
+sendfrom = ''
+sendsmtp = ''
 
 def sql_update(keyword, data, number, model):
 	file_log=open(str(dir_log)+'cisco_update.log', 'a')
@@ -45,6 +47,14 @@ freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
 	#custom_context
 	#custom_context = 19600-19699:governor; 19600-19699:errr
+	result_line=re.match(r'sendfrom = ', line)
+	if result_line is not None:
+		param_sendfrom=line.split(' = ')
+		sendfrom=param_sendfrom[1]
+	result_line=re.match(r'sendsmtp = ', line)
+	if result_line is not None:
+		param_sendsmtp=line.split(' = ')
+		sendsmtp=param_sendsmtp[1]
 	result_line=re.match(r'passwordemailreport = ', line)
 	if result_line is not None:
 		param_passwordemailreport=line.split(' = ')
@@ -438,11 +448,11 @@ p {font-size: 12px; color: #444444 !important; font-family: "Lucida Grande", "Lu
 		email_content = email_content1 + email_content2 + email_content3
 		msg = email.message.Message()
 		msg['Subject'] = 'Отчет по номерам с настроенной переадресацией'
-		msg['From'] = 'report.freepbx@gmail.com'
+		msg['From'] = sendfrom
 		msg['To'] = sendto
 		msg.add_header('Content-Type', 'text/html')
 		msg.set_payload(email_content)
-		s = smtplib.SMTP('smtp.gmail.com: 587')
+		s = smtplib.SMTP(sendsmtp)
 		s.starttls()
 		# Login Credentials for sending the mail 
 		s.login(msg['From'], passwordemailreport)
