@@ -1,10 +1,17 @@
 #!/usr/bin/env python3.6
+# -*- coding: utf-8 -*-
 
 import os
 import subprocess
 import pymysql
 import sys
 import re
+import smtplib
+import email.message
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+server = smtplib.SMTP('smtp.gmail.com:587')
 from datetime import datetime
 date_time = datetime.strftime(datetime.now(), "%Y-%m-%d_%H%M%S")
 array = []
@@ -17,6 +24,10 @@ dictionary_ringgroups = {}
 dictionary_users = {}
 dictionary_incoming = {}
 email_report = ''
+passwordemailreport = ''
+sendto = ''
+sendfrom = ''
+sendsmtp = ''
 
 def hms(secs):
 	days = secs//86400
@@ -31,6 +42,22 @@ def hms(secs):
 	
 freepbx_pass = open (str(dir_conf)+'freepbx.pass','r')
 for line in (line.rstrip() for line in freepbx_pass.readlines()):
+	result_line=re.match(r'sendfrom = ', line)
+	if result_line is not None:
+		param_sendfrom=line.split(' = ')
+		sendfrom=param_sendfrom[1]
+	result_line=re.match(r'sendsmtp = ', line)
+	if result_line is not None:
+		param_sendsmtp=line.split(' = ')
+		sendsmtp=param_sendsmtp[1]
+	result_line=re.match(r'passwordemailreport = ', line)
+	if result_line is not None:
+		param_passwordemailreport=line.split(' = ')
+		passwordemailreport=param_passwordemailreport[1]
+	result_line=re.match(r'sendto = ', line)
+	if result_line is not None:
+		param_sendto=line.split(' = ')
+		sendto=param_sendto[1]
 	result_line=re.match(r'dict_number = ', line)
 	if result_line is not None:
 		param_fixedcid=line.split(' = ')
@@ -430,7 +457,26 @@ calls_log.close()
 if email_report != '':
 	email_from = email_report.split('@')
 	if(array[5] == 'all'):
-		os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По всем номерам. <br>Отчет №2, по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a '+str(dir_conf)+'log/calls/'+date_time+'.log')
+		email_content = '<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По всем номерам. <br>Отчет №2, по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>'
 	else:
-		os.system('/usr/bin/sendEmail -f reports.calls\@'+email_from[1]+' -t '+email_report+' -u Отчеты по загрузке линий на АТС -o message-charset=utf-8 -m "<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру: '+array[5]+'<br>Отчет №2, по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>" -s localhost -a '+str(dir_conf)+'log/calls/'+date_time+'.log')
+		email_content = '<html>Отчет сформирован за период: '+array[1]+' '+array[2]+' - '+array[3]+' '+array[4]+'<br>По номеру: '+array[5]+'<br>Отчет №2, по загрузке линий на АТС, сформирован за те временные периоды, в каторые загрузка линий была >= '+array[6]+' <br><br></html>'
 
+	msg = MIMEMultipart()
+	msg['From'] = sendfrom
+	msg['To'] = sendto
+	msg['Subject'] = 'Отчеты по загрузке линий на АТС'
+	password = passwordemailreport
+
+	msg.attach(MIMEText(email_content, "html"))
+	
+	with open(dir_conf+'log/calls/'+date_time+'.log') as f:
+	    file = MIMEText(f.read())
+	
+	file.add_header('content-disposition', 'attachment', filename = date_time+'.log')
+	msg.attach(file)
+	
+	s = smtplib.SMTP(sendsmtp)
+	s.starttls()
+	s.login(msg['From'], password)
+	s.sendmail(msg['From'], [msg['To']], msg.as_string().encode('utf-8'))
+	
