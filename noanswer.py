@@ -298,7 +298,7 @@ if fw_auto == "1":
 						file_log_followme=open(str(dir_log)+'followme.log', 'a')
 						file_log_followme.write(str(date_time+"\t"+'У номера '+row[0]+' на сервере FreePBX было: '+ad+' заменили на '+text+"\n"))
 						file_log_followme.close()
-						upd_sql="""UPDATE findmefollow SET `strategy`='%(strat)s', `grptime`='%(grptime)s', `grplist`='%(grp)s', `pre_ring`='%(pre_ring)s' WHERE grpnum='%(num)s'"""%{"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grp":grplist,"num":row[0],"pre_ring":list_param[2]}
+						upd_sql="""UPDATE findmefollow SET `strategy`='%(strat)s', `grptime`='%(grptime)s', `grplist`='%(grp)s', `pre_ring`='%(pre_ring)s', `ringing`='%(ringing)s' WHERE grpnum='%(num)s'"""%{"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grp":grplist,"num":row[0],"pre_ring":list_param[2], "ringing":list_param[2] + '-30'}
 						upd_indb='/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/followme/'
 						upd_zn=['changecid','ddial','fixedcid','grpconf','grplist','postdest','grptime','ringing','prering','strategy']
 						subprocess.call(upd_indb+upd_zn[0]+' extern"', shell=True)
@@ -308,7 +308,7 @@ if fw_auto == "1":
 						subprocess.call(upd_indb+upd_zn[4]+' '+grplist+'"', shell=True)
 						subprocess.call(upd_indb+upd_zn[5]+' ext-local,'+row[0]+',dest"', shell=True)
 						subprocess.call(upd_indb+upd_zn[6]+' '+list_param[3]+'"', shell=True)
-						subprocess.call(upd_indb+upd_zn[7]+' Ring"', shell=True)
+						subprocess.call(upd_indb+upd_zn[7]+' '+list_param[2]+'-30"', shell=True)
 						subprocess.call(upd_indb+upd_zn[8]+' '+list_param[2]+'"', shell=True)
 						subprocess.call(upd_indb+upd_zn[9]+' '+list_ring_strategy[int(list_param[1])-1]+'"', shell=True)
 						cursor.execute(upd_sql)
@@ -331,7 +331,7 @@ if fw_auto == "1":
 				file_log_followme=open(str(dir_log)+'followme.log', 'a')
 				file_log_followme.write(str(date_time+"\t"+'Для номера '+row[0]+' прописали переадресацию с параметрами: '+list_ring_strategy[int(list_param[1])-1]+','+list_param[3]+','+grplist+','+postdest+','+list_param[2]+"\n"))
 				file_log_followme.close()
-				ins_sql="""INSERT INTO findmefollow (grpnum,strategy,grptime,grppre,grplist,postdest,dring,rvolume,pre_ring,ringing,calendar_enable,calendar_match) VALUES ('%(grpnum)s','%(strat)s','%(grptime)s','','%(grpl)s','%(postd)s','','','%(pre_ring)s','Ring','0','yes')"""%{"grpnum":row[0],"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grpl":grplist,"postd":postdest,"pre_ring":list_param[2]}
+				ins_sql="""INSERT INTO findmefollow (grpnum,strategy,grptime,grppre,grplist,postdest,dring,rvolume,pre_ring,ringing,calendar_enable,calendar_match) VALUES ('%(grpnum)s','%(strat)s','%(grptime)s','','%(grpl)s','%(postd)s','','','%(pre_ring)s','%(ringing)s','0','yes')"""%{"grpnum":row[0],"strat":list_ring_strategy[int(list_param[1])-1],"grptime":list_param[3],"grpl":grplist,"postd":postdest,"pre_ring":list_param[2], "ringing":list_param[2] + '-30'}
 				ins_str='/usr/sbin/rasterisk -x "database put AMPUSER '+row[0]+'/followme/'
 				ins_zn=['changecid','fixedcid','grpconf','grplist','postdest','ddial','grptime','ringing','prering','strategy']
 				subprocess.call(ins_str+ins_zn[0]+' extern"', shell=True)
@@ -341,7 +341,7 @@ if fw_auto == "1":
 				subprocess.call(ins_str+ins_zn[4]+' ext-local,'+row[0]+',dest"', shell=True)
 				subprocess.call(ins_str+ins_zn[5]+' DIRECT"', shell=True)
 				subprocess.call(ins_str+ins_zn[6]+' '+list_param[3]+'"', shell=True)
-				subprocess.call(ins_str+ins_zn[7]+' Ring"', shell=True)
+				subprocess.call(ins_str+ins_zn[7]+' '+list_param[2]+'-30"', shell=True)
 				subprocess.call(ins_str+ins_zn[8]+' '+list_param[2]+'"', shell=True)
 				subprocess.call(ins_str+ins_zn[9]+' '+list_ring_strategy[int(list_param[1])-1]+'"', shell=True)
 				cursor.execute(ins_sql)
@@ -417,7 +417,7 @@ p {font-size: 12px; color: #444444 !important; font-family: "Lucida Grande", "Lu
 		<thead>
 		    <tr>
 			<th width="140">Внутренний номер </th>
-			<th width="200">Правило переадресации </th>
+			<th width="240">Правило переадресации </th>
 			<th width="240">Сотрудник </th>
 		    </tr>
 		</thead>
