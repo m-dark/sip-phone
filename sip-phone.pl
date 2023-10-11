@@ -618,7 +618,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
                 $mtime = (stat("$dir/${key_number_line_mac}-local.cfg"))[9];
                 $size_file = (-s "$dir/${key_number_line_mac}-local.cfg");
                 $difference_in_time = ($time_now - $mtime);
-##                print("$key_number_line_mac\t1=$difference_in_time\t2=$time_now \t3=$mtime\n");
+##                print ("$key_number_line_mac\t1=$difference_in_time\t2=$time_now \t3=$mtime\n");
                 while($size_file < 17){
                     if($s==10){
                         open(my $file_dir_log, '>>:encoding(utf-8)', "$dir_log/stat.log") || die "Error opening file: $dir_log/stat.log $!";
@@ -658,12 +658,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
                             $hash_local_cfg_print{$key_number_line_mac}{'#!version:1.0.0.1'} = 0;
                         }
                         if ((exists($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old})) && ($hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} == 1)){
-                    	    if (($line_cfg_local_old =~ /^lang\./) and (($hash_mac_model{$key_number_line_mac} eq 't31') or ($hash_mac_model{$key_number_line_mac} eq 't31g'))){
-#                    		print("$line_cfg_local_old\t\t\t");
-#                               print("$hash_mac_model{$key_number_line_mac}\t$key_number_line_mac\n");
-                            }else{
-                        	print $file_cfg_local "$line_cfg_local_old\n";
-                    	    }
+                            print $file_cfg_local "$line_cfg_local_old\n";
                             $hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
 ##                          print("$key_number_line_mac $line_cfg_local_old $hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old}\n");
                         }elsif ($line_cfg_local_old =~ / = /){
@@ -695,13 +690,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
                                     &print_array_linekey($file_cfg_local,\%hash_linekey);
                                     $linekey_start = 0;
                                 }
-                                
-                                if (($line_cfg_local_old =~ /^lang\./) and (($hash_mac_model{$key_number_line_mac} eq 't31') or ($hash_mac_model{$key_number_line_mac} eq 't31g'))){
-#				    print("$line_cfg_local_old\t\t\t");
-#				    print("$hash_mac_model{$key_number_line_mac}\t$key_number_line_mac\n");
-				}else{
-                            	    print $file_cfg_local "$line_cfg_local_old\n";
-                            	}
+                                print $file_cfg_local "$line_cfg_local_old\n";
                                 $hash_local_cfg_print{$key_number_line_mac}{$line_cfg_local_old} = 0;
                             }
                         }else{
@@ -722,11 +711,7 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
                     }
                     foreach my $key_date (sort keys %{$hash_local_cfg_print{$key_number_line_mac}}){
                         if ($hash_local_cfg_print{$key_number_line_mac}{$key_date} == 1){
-                    	    if (($key_date =~ /^lang\./) and (($hash_mac_model{$key_number_line_mac} eq 't31') or ($hash_mac_model{$key_number_line_mac} eq 't31g'))){
-                    	    }else{
-                    		print("$key_date\n");
-                    		print $file_cfg_local "$key_date\n";
-                    	    }
+                            print $file_cfg_local "$key_date\n";
                             $hash_local_cfg_print{$key_number_line_mac}{$key_date} = 0;
                         }
                     }
