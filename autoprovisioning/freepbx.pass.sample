@@ -66,6 +66,23 @@ rename_memorykey = 1
 #network.vlan.internet_port_vid = 111
 #mac_cfg = 404:network.vlan.internet_port_enable = 0; 404:network.vlan.internet_port_vid = 1
 
+#Настройка часового пояса на телефонах Yealink по умолчанию
+local_time.time_zone = +5
+
+#Индивидуальные настройки для телефонов Yealink
+#'+1' => 'Germany(Berlin)'
+#'+2' => 'Russia(Kaliningrad)'
+#'+3' => 'Russia(Moscow)'
+#'+4' => 'Russia(Samara)'
+#'+5' => 'Russia(Chelyabinsk)'
+#'+6' => 'Russia(Novosibirsk, Omsk)'
+#'+7' => 'Russia(Krasnoyarsk)'
+#'+8' => 'Russian(Irkutsk, Ulan-Ude)'
+#'+9' => 'Russian(Yakutsk, Chita)'
+
+#mac_cfg = 400-420:local_time.time_zone = +3
+#mac_cfg = 400-420:local_time.time_zone_name = Russia(Moscow)
+
 # Данные для скриптов pdf_to_tiff.pl & phonebook.pl & result_email.pl
 domen = tel.ru
 user_name = test

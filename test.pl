@@ -25,7 +25,7 @@ while (1){
                 if ($rez > 30){
                         print "$date_ear$date_2\t$rez\t!!!\n";
                 }else{
-                        print "$date_ear$date_2\t$rez\n";
+#                        print "$date_ear$date_2\t$rez\n";
                 }
         }
         $date_2 = $date;

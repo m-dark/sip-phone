@@ -58,6 +58,20 @@ my $internet_port_enable = "111";   #VLan Enable
 my $internet_port_vid = "111";      #Number VLan
 my $tftp_ip = '';                   #'tftp://X.X.X.X/';
 
+my $time_zone = '+5';				#Временная зона по умолчанию для всех конфигураций Yealink
+my $time_zone_name = 'Russia(Chelyabinsk)';	#Название часового пояса по умолчанию для всех конфигураций Yealink
+my %hash_time_zone_name = (
+		'+1' => 'Germany(Berlin)',
+		'+2' => 'Russia(Kaliningrad)',
+		'+3' => 'Russia(Moscow)',
+		'+4' => 'Russia(Samara)',
+		'+5' => 'Russia(Chelyabinsk)',
+		'+6' => 'Russia(Novosibirsk, Omsk)',
+		'+7' => 'Russia(Krasnoyarsk)',
+		'+8' => 'Russian(Irkutsk, Ulan-Ude)',
+		'+9' => 'Russian(Yakutsk, Chita)'
+		);
+
 open (my $file_1, '<:encoding(UTF-8)', "$dir_conf/conf_number_line.conf") || die "Error opening file: conf_number_line.conf $!";
     while (defined(my $lime_number_line = <$file_1>)){
         chomp ($lime_number_line);
@@ -153,7 +167,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                                         if (exists($hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]})){
 ##                                          print("$array_number_cfg[1]\n");
                                         }else{
-                                            if(($array_number_cfg_mac[0] ne 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] ne 'network.vlan.internet_port_vid')){
+                                            if(($array_number_cfg_mac[0] ne 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] ne 'network.vlan.internet_port_vid') && ($array_number_cfg_mac[0] ne 'local_time.time_zone') && ($array_number_cfg_mac[0] ne 'local_time.time_zone_name')){
                                                 $hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
                                                 print("$array_number_cfg[1]\n");
                                             }
@@ -171,7 +185,7 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
 ##                              print("$array_number_cfg[0]\t$key_mac\t$array_number_cfg[1]\t$array_number_cfg_mac[1]\n");
                                 if (exists($hash_cfg_mac{$key_mac}{$array_number_cfg_mac[0]})){
                                 }else{
-                                    if(($array_number_cfg_mac[0] ne 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] ne 'network.vlan.internet_port_vid')){
+                                    if(($array_number_cfg_mac[0] ne 'network.vlan.internet_port_enable') && ($array_number_cfg_mac[0] ne 'network.vlan.internet_port_vid') && ($array_number_cfg_mac[0] ne 'local_time.time_zone') && ($array_number_cfg_mac[0] ne 'local_time.time_zone_name')){
                                         $hash_cfg_print{$key_mac}{$array_number_cfg[1]} = 1;
                                         print($array_number_cfg[1]);
                                     }
@@ -186,6 +200,13 @@ open (my $freepbx_pass, '<:encoding(UTF-8)', "$dir_conf/freepbx.pass") || die "E
                 $internet_port_enable = $array_freepbx_pass[1];
             }when('network.vlan.internet_port_vid'){
                 $internet_port_vid = $array_freepbx_pass[1];
+            }when('local_time.time_zone'){
+        	$time_zone = $array_freepbx_pass[1];
+        	if (exists($hash_time_zone_name{$time_zone})){
+        		$time_zone_name = $hash_time_zone_name{$time_zone};
+        	}else{
+        		print "ERROR 66, В Скрипте sip_phone.pl нет названия часового пояса для $time_zone.\n";
+        	}
             }default{
                 next;
             }
@@ -257,6 +278,7 @@ my %hash_model_conf = (
             'vp530'     => 'y000000000023.cfg',
             'cp860'     => 'y000000000037.cfg',
             'cp920'     => 'y000000000078.cfg',
+            'cp925'	=> 'y000000000148.cfg',
             'cp930w'    => 'y000000000077.cfg',
             'cp960'     => 'y000000000073.cfg',
             't30'       => 'y000000000127.cfg',
@@ -420,8 +442,12 @@ open (my $file, '>>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_ad_sip-phone.t
                         $hash_cfg_mac{"\L$$ref[2]"}{'network.vlan.internet_port_enable'} = 1;
                         $hash_cfg_mac{"\L$$ref[2]"}{'network.vlan.internet_port_vid'} = $vlan_number[1];
                     }
+                }elsif (($vpn_or_vlan =~ /^tz=/) || ($vpn_or_vlan =~ /^Tz=/) || ($vpn_or_vlan =~ /^TZ=/)){
+                    my @t_z = split (/=/,$vpn_or_vlan,2);
+                    $hash_cfg_mac{"\L$$ref[2]"}{'local_time.time_zone'} = $t_z[1];
+                    $hash_cfg_mac{"\L$$ref[2]"}{'local_time.time_zone_name'} = $hash_time_zone_name{$t_z[1]};
                 }else{
-                    print "Error 111: VPN or VLAN\n";
+                    print "Error 111: VPN or VLAN or time_zone\n";
                 }
             }
         }
@@ -571,12 +597,26 @@ open ($file_1, '>:encoding(UTF-8)', "$tmp_dir/${date_time_file}_conf_number_line
             if (exists($hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'})){
                 if ($hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'} == 0){
                 }else{
-                    print $file_cfg "network.vlan.internet_port_vid = $hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'}\n";
+                    print $file_cfg "network.vlan.internet_port_vid = $hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'}\n\n";
                 }
                 delete $hash_cfg_print{$key_number_line_mac}{'network.vlan.internet_port_vid = '.$hash_cfg_mac{$key_number_line_mac}{'network.vlan.internet_port_vid'}};
             }else{
-                print $file_cfg "network.vlan.internet_port_vid = $internet_port_vid\n";
+                print $file_cfg "network.vlan.internet_port_vid = $internet_port_vid\n\n";
             }
+
+            if (exists($hash_cfg_mac{$key_number_line_mac}{'local_time.time_zone'})){
+                print $file_cfg "local_time.time_zone = $hash_cfg_mac{$key_number_line_mac}{'local_time.time_zone'}\n";
+                delete $hash_cfg_print{$key_number_line_mac}{'local_time.time_zone = '.$hash_cfg_mac{$key_number_line_mac}{'local_time.time_zone'}};
+            }else{
+                print $file_cfg "local_time.time_zone = $time_zone\n";
+            }
+            if (exists($hash_cfg_mac{$key_number_line_mac}{'local_time.time_zone_name'})){
+                print $file_cfg "local_time.time_zone_name = $hash_cfg_mac{$key_number_line_mac}{'local_time.time_zone_name'}\n";
+                delete $hash_cfg_print{$key_number_line_mac}{'local_time.time_zone_name = '.$hash_cfg_mac{$key_number_line_mac}{'local_time.time_zone_name'}};
+            }else{
+                print $file_cfg "local_time.time_zone_name = $time_zone_name\n";
+            }
+
             if (exists($hash_cfg_print{$key_number_line_mac})){
                 foreach my $key_print (keys %{$hash_cfg_print{$key_number_line_mac}}){
                     print $file_cfg "$key_print\n";
